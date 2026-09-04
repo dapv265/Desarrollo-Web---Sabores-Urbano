@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabores Urbanos - Administración - Gestión de Locales</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Encabezado -->
+    <header class="app-header">
+        <a class="brand" href="../../index.html"><span class="brand-mark" aria-hidden="true"></span>SABORES URBANOS</a>
+        <div class="header-actions">
+            <div class="user-tag">Administrador General</div>
+            <a class="back-link" href="../../index.html">← Volver al sitio</a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="page-heading">
+            <p class="eyebrow">Administración</p>
+            <h1>Gestión de locales</h1>
+            <p>Registra y mantén actualizada la información de cada sucursal.</p>
+        </div>
+        
+        <!-- Formulario para agregar locales (RF2) -->
+        <div class="form-box">
+            <h3>Registrar Nuevo Restaurante</h3>
+            <form id="formularioLocal">
+                <div class="form-grid">
+                    <div class="campo">
+                        <label for="codigo">Código del Local:</label>
+                        <input type="text" id="codigo" placeholder="Ej: LOC-01" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="nombre">Nombre de Sucursal:</label>
+                        <input type="text" id="nombre" placeholder="Ej: Sucursal Centro" required>
+                    </div>
+
+                    <div class="campo fila-completa">
+                        <label for="direccion">Dirección / Ubicación:</label>
+                        <input type="text" id="direccion" placeholder="Ej: Av. Providencia 1234" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="horaApertura">Hora Apertura:</label>
+                        <input type="time" id="horaApertura" value="12:00" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="horaCierre">Hora Cierre:</label>
+                        <input type="time" id="horaCierre" value="23:00" required>
+                    </div>
+
+                    <div class="campo fila-completa">
+                        <label for="estado">Estado del Local:</label>
+                        <select id="estado">
+                            <option value="Operativo">Operativo</option>
+                            <option value="En Mantención">En Mantención</option>
+                            <option value="Fuera de Servicio">Fuera de Servicio</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-guardar">Guardar Local</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabla de locales -->
+        <div class="table-box">
+            <h3>Locales Registrados</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Dirección</th>
+                        <th>Horario</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoTabla">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sabores Urbanos — Mapa de Mesas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ===================== MASTHEAD ===================== -->
+  <header class="masthead">
+    <div class="masthead-top">
+      <span class="wordmark">SABORES URBANOS</span>
+      <a class="masthead-back" href="../../index.html">← Volver al sitio</a>
+      <span class="masthead-meta">SEDE PROVIDENCIA · ADMIN. DE LOCAL</span>
+    </div>
+    <h1>Mapa de mesas</h1>
+    <p class="masthead-lead">Registro y estado del salón — RF3. Cada mesa con su número, ubicación, capacidad y estado actual.</p>
+  </header>
+
+  <!-- ===================== FILTROS ===================== -->
+  <nav class="filter-row" aria-label="Filtrar por zona">
+    <span class="filter-label">Zona</span>
+    <button class="filter-tab active" data-filter-type="zona" data-value="todas">Todas</button>
+    <button class="filter-tab" data-filter-type="zona" data-value="Terraza">Terraza</button>
+    <button class="filter-tab" data-filter-type="zona" data-value="Salón principal">Salón principal</button>
+    <button class="filter-tab" data-filter-type="zona" data-value="Barra">Barra</button>
+  </nav>
+  <nav class="filter-row" aria-label="Filtrar por estado">
+    <span class="filter-label">Estado</span>
+    <button class="filter-tab active" data-filter-type="estado" data-value="todos">Todos</button>
+    <button class="filter-tab" data-filter-type="estado" data-value="disponible">Disponible</button>
+    <button class="filter-tab" data-filter-type="estado" data-value="reservada">Reservada</button>
+    <button class="filter-tab" data-filter-type="estado" data-value="ocupada">Ocupada</button>
+    <button class="filter-tab" data-filter-type="estado" data-value="limpieza">Pendiente de limpieza</button>
+    <button class="filter-tab" data-filter-type="estado" data-value="fuera">Fuera de servicio</button>
+  </nav>
+
+  <!-- ===================== ESQUEMA DEL SALÓN ===================== -->
+  <section class="schematic" aria-label="Esquema del salón">
+    <div class="schematic-zone" data-zone="Terraza">
+      <span class="schematic-zone-label">01 — Terraza</span>
+      <div class="schematic-row" data-zone-row="Terraza"></div>
+    </div>
+    <div class="schematic-zone" data-zone="Salón principal">
+      <span class="schematic-zone-label">02 — Salón principal</span>
+      <div class="schematic-row" data-zone-row="Salón principal"></div>
+    </div>
+    <div class="schematic-zone" data-zone="Barra">
+      <span class="schematic-zone-label">03 — Barra</span>
+      <div class="schematic-row" data-zone-row="Barra"></div>
+    </div>
+
+    <div class="key">
+      <span><i class="key-mark key-disponible"></i>Disponible</span>
+      <span><i class="key-mark key-reservada"></i>Reservada</span>
+      <span><i class="key-mark key-ocupada"></i>Ocupada</span>
+      <span><i class="key-mark key-limpieza"></i>Pendiente de limpieza</span>
+      <span><i class="key-mark key-fuera"></i>Fuera de servicio</span>
+    </div>
+  </section>
+
+  <!-- ===================== LIBRO DE MESAS (LISTA) ===================== -->
+  <section class="ledger">
+    <div class="ledger-head">
+      <h2>Libro de mesas</h2>
+      <span class="ledger-count" id="conteo-mesas">13 registradas</span>
+    </div>
+
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th class="col-num">N.º</th>
+          <th>Zona</th>
+          <th>Capacidad</th>
+          <th>Estado</th>
+          <th class="col-action"></th>
+        </tr>
+      </thead>
+      <tbody id="ledger-body">
+        <!-- filas generadas por js/script.js -->
+      </tbody>
+    </table>
+
+    <button class="add-row-trigger" id="btn-mostrar-nueva">+ Agregar mesa</button>
+
+    <form class="inline-form" id="form-nueva" hidden>
+      <div class="inline-field">
+        <label for="n-numero">N.º</label>
+        <input type="text" id="n-numero" placeholder="M-14" required>
+      </div>
+      <div class="inline-field">
+        <label for="n-zona">Zona</label>
+        <select id="n-zona">
+          <option>Terraza</option>
+          <option>Salón principal</option>
+          <option>Barra</option>
+        </select>
+      </div>
+      <div class="inline-field">
+        <label for="n-capacidad">Capacidad</label>
+        <input type="number" id="n-capacidad" min="1" max="20" value="4" required>
+      </div>
+      <div class="inline-field">
+        <label for="n-estado">Estado</label>
+        <select id="n-estado">
+          <option value="disponible">Disponible</option>
+          <option value="reservada">Reservada</option>
+          <option value="limpieza">Pendiente de limpieza</option>
+          <option value="fuera">Fuera de servicio</option>
+        </select>
+      </div>
+      <div class="inline-field inline-field-action">
+        <button type="submit" class="btn-ink">Agregar</button>
+        <button type="button" class="btn-text" id="btn-cancelar-nueva">Cancelar</button>
+      </div>
+    </form>
+
+    <p class="feedback" id="feedback-general" hidden></p>
+  </section>
+
+  <footer class="page-footer">
+    Prototipo de interfaz — Integrante 2, Pantalla 3 (RF3), Sabores Urbanos. Los cambios se guardan solo en este navegador, no hay conexión a un servidor.
+  </footer>
+
+</div>
+
+<!-- plantilla de fila de edición, clonada por JS -->
+<template id="plantilla-edicion">
+  <tr class="ledger-edit-row">
+    <td colspan="5">
+      <div class="edit-card">
+        <span class="edit-card-title">Editar mesa <strong class="edit-num"></strong></span>
+        <div class="edit-fields">
+          <div class="inline-field">
+            <label>Zona</label>
+            <select class="e-zona">
+              <option>Terraza</option>
+              <option>Salón principal</option>
+              <option>Barra</option>
+            </select>
+          </div>
+          <div class="inline-field">
+            <label>Capacidad</label>
+            <input type="number" class="e-capacidad" min="1" max="20">
+          </div>
+          <div class="inline-field">
+            <label>Estado</label>
+            <select class="e-estado">
+              <option value="disponible">Disponible</option>
+              <option value="reservada">Reservada</option>
+              <option value="ocupada">Ocupada</option>
+              <option value="limpieza">Pendiente de limpieza</option>
+              <option value="fuera">Fuera de servicio</option>
+            </select>
+          </div>
+          <div class="inline-field inline-field-action">
+            <button type="button" class="btn-ink e-guardar">Guardar</button>
+            <button type="button" class="btn-text e-eliminar">Eliminar</button>
+            <button type="button" class="btn-text e-cerrar">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>
+</template>
+
+<script src="js/script.js"></script>
+</body>
+</html>

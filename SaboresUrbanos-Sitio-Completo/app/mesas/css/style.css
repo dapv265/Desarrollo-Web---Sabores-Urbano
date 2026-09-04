@@ -1,0 +1,461 @@
+/* =========================================================
+   SABORES URBANOS — Mapa de mesas (RF3)
+   Estilo: libro/ficha de salón, paleta cálida "terracota & oliva".
+   Orden: variables > reset > masthead > filtros > esquema >
+          libro/tabla > formularios > pie > responsive
+   ========================================================= */
+
+:root{
+  --paper:#faf5ee;
+  --paper-alt:#f2e9db;
+  --ink:#2b2420;
+  --ink-dim:#786a5d;
+  --ink-faint:#ab9a89;
+  --rule:#e6d9c6;
+  --rule-strong:#d2bc9d;
+
+  --accent:#b3552c;        /* terracota — marca / acento principal */
+  --accent-dim:#8f431f;
+  --accent-soft:#f1ded0;
+
+  --disponible:#5f7a52;    /* oliva/salvia — disponible */
+  --disponible-soft:#e6ebdd;
+
+  --reservada:#b0812c;     /* dorado ámbar — reservada */
+  --reservada-soft:#f3e6c9;
+
+  --ocupada:#b3552c;       /* terracota — ocupada (usa el acento) */
+  --ocupada-soft:#f1ded0;
+
+  --muted:#ab9a89;         /* limpieza / fuera de servicio */
+  --muted-soft:#ece3d6;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 12% -10%, rgba(179,85,44,0.06), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(95,122,82,0.05), transparent 55%),
+    var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', Arial, sans-serif;
+  font-size:15px;
+  line-height:1.6;
+}
+
+.mono{ font-family:'IBM Plex Mono', monospace; }
+
+button, input, select{ font-family:inherit; font-size:inherit; color:inherit; }
+
+.page{
+  max-width:920px;
+  margin:0 auto;
+  padding:54px 24px 90px;
+}
+
+/* ================= MASTHEAD ================= */
+.masthead{
+  border-bottom:2px solid var(--ink);
+  padding-bottom:26px;
+  margin-bottom:34px;
+  position:relative;
+}
+.masthead-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:28px;
+}
+.wordmark{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:13px;
+  letter-spacing:0.18em;
+  color:var(--accent-dim);
+}
+.masthead-meta{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.06em;
+  color:var(--ink-faint);
+}
+.masthead-back{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.04em;
+  color:var(--accent-dim);
+  border-bottom:1px solid var(--accent);
+  padding-bottom:1px;
+}
+.masthead-back:hover{ color:var(--accent); }
+.masthead h1{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:46px;
+  letter-spacing:-0.01em;
+  margin-bottom:12px;
+  color:var(--ink);
+}
+.masthead-lead{
+  color:var(--ink-dim);
+  max-width:520px;
+  font-size:15px;
+}
+
+/* ================= FILTROS ================= */
+.filter-row{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  flex-wrap:wrap;
+  padding:11px 0;
+  border-bottom:1px solid var(--rule);
+}
+.filter-label{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.1em;
+  color:var(--ink-faint);
+  width:52px;
+  flex:none;
+}
+.filter-tab{
+  background:none;
+  border:none;
+  padding:5px 2px;
+  font-size:13px;
+  color:var(--ink-dim);
+  border-bottom:1.5px solid transparent;
+  cursor:pointer;
+  transition:color .15s ease, border-color .15s ease;
+}
+.filter-tab:hover{ color:var(--ink); }
+.filter-tab.active{
+  color:var(--accent-dim);
+  font-weight:600;
+  border-bottom-color:var(--accent);
+}
+
+/* ================= ESQUEMA DEL SALÓN ================= */
+.schematic{
+  padding:36px 0 10px;
+}
+.schematic-zone{
+  padding:20px 0;
+  border-bottom:1px dashed var(--rule);
+}
+.schematic-zone-label{
+  display:block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.08em;
+  color:var(--accent-dim);
+  margin-bottom:15px;
+}
+.schematic-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.cell{
+  position:relative;
+  width:76px;
+  height:76px;
+  border:1.5px solid var(--ink);
+  border-radius:6px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  background:#fff;
+  box-shadow:2px 2px 0 rgba(43,36,32,0.06);
+  transition:transform .12s ease, box-shadow .12s ease;
+  overflow:hidden;
+}
+.cell:hover{ transform:translateY(-3px); box-shadow:3px 4px 0 rgba(43,36,32,0.09); }
+.cell.round{ border-radius:50%; }
+.cell .cell-num{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:12.5px;
+}
+.cell .cell-cap{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:9px;
+  color:var(--ink-faint);
+  margin-top:1px;
+}
+.cell.selected{
+  border-width:2px;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.cell.hidden-filter{ display:none; }
+
+/* estado: disponible = trazo salvia suave */
+.cell.st-disponible{ background:var(--disponible-soft); border-color:var(--disponible); }
+.cell.st-disponible .cell-num{ color:var(--disponible); }
+
+/* estado: reservada = dorado + marca de esquina */
+.cell.st-reservada{ background:var(--reservada-soft); border-color:var(--reservada); }
+.cell.st-reservada .cell-num{ color:var(--reservada); }
+.cell.st-reservada::after{
+  content:"R";
+  position:absolute; top:3px; right:5px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px; font-weight:700; color:var(--reservada);
+}
+
+/* estado: ocupada = terracota + sello diagonal */
+.cell.st-ocupada{ background:var(--ocupada-soft); border-color:var(--ocupada); }
+.cell.st-ocupada .cell-num,
+.cell.st-ocupada .cell-cap{ color:var(--ocupada); }
+.cell.st-ocupada::before{
+  content:"OCUPADA";
+  position:absolute;
+  top:50%; left:50%;
+  white-space:nowrap;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:7px; font-weight:700; letter-spacing:0.03em;
+  color:var(--ocupada);
+  border:1px solid var(--ocupada);
+  border-radius:3px;
+  padding:1px 4px;
+  background:rgba(255,255,255,0.55);
+  transform:translate(-50%,-50%) rotate(-14deg);
+  opacity:0.95;
+}
+
+/* estado: limpieza = rayado diagonal + texto atenuado */
+.cell.st-limpieza{
+  border-style:dashed;
+  border-color:var(--muted);
+  background:repeating-linear-gradient(45deg, var(--muted-soft), var(--muted-soft) 5px, #fff 5px, #fff 10px);
+}
+.cell.st-limpieza .cell-num,
+.cell.st-limpieza .cell-cap{ color:var(--ink-dim); }
+
+/* estado: fuera de servicio = tachado */
+.cell.st-fuera{ border-style:dotted; border-color:var(--ink-faint); background:var(--muted-soft); opacity:0.65; box-shadow:none; }
+.cell.st-fuera .cell-num{ text-decoration:line-through; }
+
+.key{
+  display:flex;
+  flex-wrap:wrap;
+  gap:22px;
+  margin-top:24px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--ink-dim);
+}
+.key span{ display:flex; align-items:center; gap:7px; }
+.key-mark{
+  width:12px; height:12px; border:1.5px solid var(--ink); border-radius:3px; display:inline-block;
+}
+.key-disponible{ background:var(--disponible-soft); border-color:var(--disponible); }
+.key-reservada{ background:var(--reservada-soft); border-color:var(--reservada); }
+.key-ocupada{ background:var(--ocupada-soft); border-color:var(--ocupada); }
+.key-limpieza{ border-style:dashed; border-color:var(--muted); }
+.key-fuera{ border-style:dotted; border-color:var(--ink-faint); opacity:0.7; }
+
+/* ================= LIBRO DE MESAS (TABLA) ================= */
+.ledger{
+  margin-top:46px;
+}
+.ledger-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:14px;
+}
+.ledger-head h2{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:23px;
+  color:var(--ink);
+}
+.ledger-count{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11.5px;
+  color:var(--accent-dim);
+}
+
+.ledger-table{
+  width:100%;
+  border-collapse:collapse;
+}
+.ledger-table thead th{
+  text-align:left;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.08em;
+  color:var(--ink-faint);
+  font-weight:500;
+  padding:9px 10px;
+  border-bottom:2px solid var(--ink);
+}
+.ledger-table .col-num{ width:70px; }
+.ledger-table .col-action{ width:24px; }
+
+.ledger-table tbody tr.mesa-row{
+  border-bottom:1px solid var(--rule);
+  cursor:pointer;
+  transition:background-color .12s ease;
+}
+.ledger-table tbody tr.mesa-row:hover{ background:var(--paper-alt); }
+.ledger-table tbody tr.mesa-row.selected{ background:var(--accent-soft); }
+.ledger-table td{
+  padding:12px 10px;
+  font-size:13.5px;
+}
+.ledger-table td.t-num{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+.ledger-table td.t-estado{ font-family:'IBM Plex Mono', monospace; font-size:12px; }
+.ledger-table td.t-arrow{
+  text-align:right; color:var(--accent); font-size:13px;
+}
+
+.estado-texto-disponible{ color:var(--disponible); font-weight:600; }
+.estado-texto-reservada{ color:var(--reservada); font-weight:600; }
+.estado-texto-ocupada{ color:var(--ocupada); font-weight:600; }
+.estado-texto-limpieza{ color:var(--ink-dim); }
+.estado-texto-fuera{ color:var(--ink-faint); text-decoration:line-through; }
+
+/* fila de edición inline (desplegada bajo la fila clicada) */
+.ledger-edit-row td{ padding:0; border-bottom:1px solid var(--rule); }
+.edit-card{
+  background:var(--paper-alt);
+  border-left:3px solid var(--accent);
+  padding:16px 16px 18px;
+}
+.edit-card-title{
+  display:block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--ink-dim);
+  letter-spacing:0.04em;
+  margin-bottom:12px;
+}
+.edit-card-title strong{ color:var(--accent-dim); }
+.edit-fields{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  align-items:end;
+}
+
+/* ================= CAMPOS / FORMULARIOS ================= */
+.inline-field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.inline-field label{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  letter-spacing:0.06em;
+  color:var(--ink-faint);
+}
+.inline-field input,
+.inline-field select{
+  border:none;
+  border-bottom:1.5px solid var(--rule-strong);
+  background:transparent;
+  padding:5px 2px;
+  font-size:13.5px;
+  min-width:110px;
+}
+.inline-field input:focus,
+.inline-field select:focus{
+  outline:none;
+  border-bottom-color:var(--accent);
+}
+.inline-field-action{
+  flex-direction:row;
+  gap:10px;
+  align-items:center;
+}
+
+.btn-ink{
+  background:var(--ink);
+  color:var(--paper);
+  border:1px solid var(--ink);
+  border-radius:4px;
+  padding:9px 18px;
+  font-size:12.5px;
+  font-weight:600;
+  letter-spacing:0.02em;
+  cursor:pointer;
+  transition:background-color .15s ease, border-color .15s ease;
+}
+.btn-ink:hover{ background:var(--accent); border-color:var(--accent); }
+
+.btn-text{
+  background:none;
+  border:none;
+  color:var(--ink-dim);
+  font-size:12.5px;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:9px 4px;
+}
+.btn-text:hover{ color:var(--accent-dim); }
+
+.add-row-trigger{
+  display:inline-block;
+  margin-top:16px;
+  background:none;
+  border:none;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px;
+  color:var(--accent-dim);
+  border-bottom:1px solid var(--accent);
+  padding:2px 0;
+  cursor:pointer;
+}
+.add-row-trigger:hover{ color:var(--accent); }
+
+.inline-form{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  align-items:end;
+  margin-top:18px;
+  padding:16px 16px;
+  background:var(--paper-alt);
+  border-left:3px solid var(--disponible);
+  border-radius:0 4px 4px 0;
+}
+.inline-form[hidden]{ display:none; } /* el atributo hidden debe ganarle a .inline-form{display:flex} */
+
+.feedback{
+  margin-top:16px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  color:var(--accent-dim);
+  border-top:1px dashed var(--rule);
+  padding-top:12px;
+}
+
+/* ================= PIE ================= */
+.page-footer{
+  margin-top:60px;
+  padding-top:16px;
+  border-top:1px solid var(--rule);
+  font-size:11px;
+  color:var(--ink-faint);
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width:640px){
+  .page{ padding:36px 16px 70px; }
+  .masthead h1{ font-size:32px; }
+  .ledger-table thead{ display:none; }
+  .ledger-table td{ display:block; padding:4px 10px; }
+  .ledger-table tr.mesa-row{ display:block; padding:8px 0; }
+  .edit-fields{ flex-direction:column; align-items:stretch; }
+}

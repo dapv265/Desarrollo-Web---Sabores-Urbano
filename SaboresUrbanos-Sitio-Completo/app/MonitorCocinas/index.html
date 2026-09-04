@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KDS - Sabores Urbanos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="kds-header">
+        <div class="kds-title">
+            <a class="brand" href="../../index.html"><span class="brand-mark" aria-hidden="true"></span>SABORES URBANOS</a>
+            <div>
+                <h1>Monitor de cocina</h1>
+                <p>Pedidos en tiempo real</p>
+            </div>
+        </div>
+        <div class="kds-header-actions">
+            <a class="back-link" href="../../index.html">← Volver al sitio</a>
+            <div class="reloj" id="reloj">--:--:--</div>
+        </div>
+    </header>
+
+    <main class="tablero-kds">
+        <!-- Columna de Pedidos Pendientes -->
+        <section class="columna" id="col-pendientes">
+            <h2 class="titulo-columna pendientes">Pendientes</h2>
+            <div class="contenedor-tickets" id="lista-pendientes">
+                
+                <!-- Ticket de Ejemplo -->
+                <article class="ticket urgente" id="ticket-001">
+                    <div class="ticket-header">
+                        <span class="orden">#001 - Salón</span>
+                        <span class="mesa">Mesa 4</span>
+                        <span class="tiempo">Hace 5 min</span>
+                    </div>
+                    <ul class="lista-productos">
+                        <li><strong>2x</strong> Lomo a lo Pobre</li>
+                        <li><strong>1x</strong> Ensalada César
+                            <p class="observacion">Sin crutones, aderezo aparte</p>
+                        </li>
+                    </ul>
+                    <button class="btn-accion btn-preparar" onclick="moverAPreparacion('ticket-001')">
+                        Comenzar Preparación
+                    </button>
+                </article>
+
+                <article class="ticket" id="ticket-002">
+                    <div class="ticket-header">
+                        <span class="orden">#002 - Para Llevar</span>
+                        <span class="mesa">Cliente: Juan</span>
+                        <span class="tiempo">Hace 2 min</span>
+                    </div>
+                    <ul class="lista-productos">
+                        <li><strong>3x</strong> Hamburguesa Clásica</li>
+                        <li><strong>3x</strong> Papas Fritas</li>
+                    </ul>
+                    <button class="btn-accion btn-preparar" onclick="moverAPreparacion('ticket-002')">
+                        Comenzar Preparación
+                    </button>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- Columna de Pedidos En Preparación -->
+        <section class="columna" id="col-preparacion">
+            <h2 class="titulo-columna preparacion">En Preparación</h2>
+            <div class="contenedor-tickets" id="lista-preparacion">
+                <!-- Los tickets se moverán aquí vía JS -->
+            </div>
+        </section>
+
+        <!-- Columna de Pedidos Listos -->
+        <section class="columna" id="col-listos">
+            <h2 class="titulo-columna listos">Listos para Entrega</h2>
+            <div class="contenedor-tickets" id="lista-listos">
+                <!-- Los tickets terminados se moverán aquí vía JS -->
+            </div>
+        </section>
+    </main>
+
+    <script src="scrip.js"></script>
+</body>
+</html>

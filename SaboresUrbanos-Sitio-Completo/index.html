@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sabores Urbanos — Gestión inteligente para restaurantes</title>
+<meta name="description" content="Visualiza tus mesas, gestiona reservas y mantén el control de tu operación desde un solo lugar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ===================== NAVBAR FLOTANTE ===================== -->
+<header class="navbar" id="navbar">
+  <a href="#inicio" class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    SABORES URBANOS
+  </a>
+
+  <nav class="nav-links" id="nav-links" aria-label="Navegación principal">
+    <a href="app/Restaurants/index.html">Gestión de Locales</a>
+    <a href="app/mesas/mesas.html">Mapa y Gestión de Mesas</a>
+    <a href="app/reservas/calendario.html">Calendario de Reservas</a>
+    <a href="app/MonitorCocinas/index.html">Monitor de Cocina (KDS)</a>
+  </nav>
+
+  <a href="app/mesas/mesas.html" class="btn btn-primary btn-sm nav-cta">Abrir mesas</a>
+
+  <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<main>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" id="inicio">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+
+      <div class="hero-copy reveal">
+        <p class="eyebrow">Gestión inteligente para restaurantes</p>
+        <h1>Tu restaurante.<br>Más simple.<br>Más organizado.</h1>
+        <p class="hero-sub">Visualiza tus mesas, gestiona reservas y mantén el control de tu operación desde un solo lugar.</p>
+        <div class="hero-actions">
+          <a href="#solucion" class="btn btn-primary">Conocer la solución</a>
+          <a href="app/mesas/mesas.html" class="btn btn-ghost">Ver demostración</a>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="app-mock app-mock-hero">
+          <aside class="app-sidebar">
+            <span class="app-side-logo" aria-hidden="true"></span>
+            <span class="app-side-item active"><i class="ic ic-grid"></i>Mesas</span>
+            <span class="app-side-item"><i class="ic ic-cal"></i>Reservas</span>
+            <span class="app-side-item"><i class="ic ic-list"></i>Pedidos</span>
+            <span class="app-side-item"><i class="ic ic-set"></i>Ajustes</span>
+          </aside>
+          <div class="app-main">
+            <div class="app-topbar">
+              <span class="app-title">Mapa de mesas</span>
+              <span class="app-sede mono">Sede Providencia</span>
+            </div>
+            <div class="app-stats">
+              <div class="stat-card">
+                <span class="stat-label">Ocupación</span>
+                <span class="stat-value">68%</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">Reservas hoy</span>
+                <span class="stat-value">12</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">Mesas libres</span>
+                <span class="stat-value">4</span>
+              </div>
+            </div>
+            <div class="app-tables">
+              <div class="tcell round st-ocupada">01</div>
+              <div class="tcell st-disponible">02</div>
+              <div class="tcell st-reservada">03</div>
+              <div class="tcell round st-disponible">04</div>
+              <div class="tcell st-limpieza">05</div>
+              <div class="tcell round st-ocupada">06</div>
+            </div>
+            <div class="app-legend">
+              <span><i class="dot d-disponible"></i>Disponible</span>
+              <span><i class="dot d-reservada"></i>Reservada</span>
+              <span><i class="dot d-ocupada"></i>Ocupada</span>
+              <span><i class="dot d-limpieza"></i>Pendiente de limpieza</span>
+            </div>
+          </div>
+        </div>
+        <a href="app/mesas/mesas.html" class="mock-caption">Abrir el mapa de mesas real <span aria-hidden="true">→</span></a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== EL PROBLEMA ===================== -->
+  <section class="section" id="problema">
+    <div class="wrap">
+      <div class="section-head reveal center">
+        <p class="eyebrow eyebrow-dark">El problema</p>
+        <h2>Administrar un restaurante<br>no debería ser complicado.</h2>
+      </div>
+
+      <div class="card-grid reveal">
+        <article class="problem-card">
+          <span class="icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18"/><path d="M8 3v3M16 3v3"/><path d="M9.5 14.5l2 2 3.5-3.5"/></svg>
+          </span>
+          <h3>Reservas desordenadas</h3>
+          <p>Confirmaciones por teléfono, notas sueltas y mensajes cruzados que terminan en mesas dobladas.</p>
+        </article>
+
+        <article class="problem-card">
+          <span class="icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><path d="M4 4l16 16"/></svg>
+          </span>
+          <h3>Poca visibilidad</h3>
+          <p>Nadie sabe con certeza qué mesas están libres u ocupadas sin caminar todo el salón.</p>
+        </article>
+
+        <article class="problem-card">
+          <span class="icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="7" height="9" rx="1"/><rect x="13" y="7" width="7" height="14" rx="1"/><rect x="4" y="16" width="7" height="5" rx="1"/></svg>
+          </span>
+          <h3>Información dispersa</h3>
+          <p>Capacidad, estado y notas de cada mesa viven en lugares distintos y casi nunca actualizados.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LA SOLUCIÓN ===================== -->
+  <section class="section section-cream-alt" id="solucion">
+    <div class="wrap">
+      <div class="section-head reveal center">
+        <p class="eyebrow">La solución</p>
+        <h2>Todo bajo control.</h2>
+      </div>
+
+      <div class="feature-grid reveal">
+        <article class="feature-card">
+          <div class="feature-illus illus-mesas" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <h3>Mapa de mesas</h3>
+          <p>Visualiza el salón completo con el estado real de cada mesa.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-illus illus-reservas" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <h3>Reservas</h3>
+          <p>Confirma reservas sin duplicar mesas ni perder horarios.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-illus illus-operacion" aria-hidden="true">
+            <span></span><span></span>
+          </div>
+          <h3>Operación</h3>
+          <p>Sigue el servicio en vivo y reacciona antes de que se vuelva un problema.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MAPA DE MESAS (FONDO OSCURO) ===================== -->
+  <section class="section section-dark" id="mapa">
+    <div class="wrap dark-split">
+      <div class="dark-copy reveal">
+        <p class="eyebrow eyebrow-light">Funcionalidad destacada</p>
+        <h2>Visualiza tu restaurante.</h2>
+        <p class="section-lead section-lead-dark">Cada mesa con su número, zona, capacidad y estado — para que tu equipo sepa exactamente dónde sentar al próximo cliente, sin caminar todo el salón.</p>
+        <ul class="dark-points">
+          <li><i class="ic ic-check"></i>Estados en tiempo real</li>
+          <li><i class="ic ic-check"></i>Organización por zona</li>
+          <li><i class="ic ic-check"></i>Historial de ocupación</li>
+        </ul>
+      </div>
+
+      <div class="dark-visual reveal">
+        <div class="app-mock app-mock-big">
+          <aside class="app-sidebar">
+            <span class="app-side-logo" aria-hidden="true"></span>
+            <span class="app-side-item active"><i class="ic ic-grid"></i>Mesas</span>
+            <span class="app-side-item"><i class="ic ic-cal"></i>Reservas</span>
+            <span class="app-side-item"><i class="ic ic-list"></i>Pedidos</span>
+          </aside>
+          <div class="app-main">
+            <div class="app-topbar">
+              <span class="app-title">Mapa de mesas</span>
+              <span class="app-sede mono">10 mesas registradas</span>
+            </div>
+            <div class="app-tables app-tables-big">
+              <div class="tcell round st-disponible">01</div>
+              <div class="tcell st-ocupada">02</div>
+              <div class="tcell st-reservada">03</div>
+              <div class="tcell round st-disponible">04</div>
+              <div class="tcell st-ocupada">05</div>
+              <div class="tcell round st-limpieza">06</div>
+              <div class="tcell st-ocupada">07</div>
+              <div class="tcell round st-reservada">08</div>
+              <div class="tcell st-disponible">09</div>
+              <div class="tcell round st-ocupada">10</div>
+            </div>
+            <div class="app-legend">
+              <span><i class="dot d-disponible"></i>Disponible</span>
+              <span><i class="dot d-reservada"></i>Reservada</span>
+              <span><i class="dot d-ocupada"></i>Ocupada</span>
+              <span><i class="dot d-limpieza"></i>Pendiente de limpieza</span>
+            </div>
+          </div>
+        </div>
+        <a href="app/mesas/mesas.html" class="mock-caption mock-caption-dark">Abrir el mapa de mesas real <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BENEFICIOS ===================== -->
+  <section class="section" id="beneficios">
+    <div class="wrap">
+      <div class="section-head reveal center">
+        <p class="eyebrow eyebrow-dark">Beneficios</p>
+        <h2>Menos fricción, más servicio.</h2>
+      </div>
+
+      <ul class="benefits-list reveal">
+        <li>
+          <i class="ic ic-check"></i>
+          <div><strong>Más organización</strong><span>Un solo lugar para ver todo el salón.</span></div>
+        </li>
+        <li>
+          <i class="ic ic-check"></i>
+          <div><strong>Menos errores</strong><span>Reduce reservas duplicadas y cruces de mesa.</span></div>
+        </li>
+        <li>
+          <i class="ic ic-check"></i>
+          <div><strong>Mayor control</strong><span>Estados claros y actualizados durante el servicio.</span></div>
+        </li>
+        <li>
+          <i class="ic ic-check"></i>
+          <div><strong>Mejor experiencia</strong><span>Menos esperas y confusiones para tus clientes.</span></div>
+        </li>
+        <li>
+          <i class="ic ic-check"></i>
+          <div><strong>Información centralizada</strong><span>Todo el equipo trabaja con los mismos datos.</span></div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== SECCIÓN FOTOGRÁFICA EDITORIAL ===================== -->
+  <section class="section section-cream-alt" id="galeria">
+    <div class="wrap">
+      <div class="editorial reveal">
+        <div class="editorial-text">
+          <p class="eyebrow">Hecho para el salón real</p>
+          <h2>Una experiencia pensada<br>para restaurantes reales.</h2>
+          <p class="section-lead">Sabores Urbanos se diseñó junto a equipos de sala reales, para el ritmo de un servicio real — no para una demo.</p>
+        </div>
+        <div class="editorial-photo editorial-photo-lg">
+          <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1000&auto=format&fit=crop" alt="Interior elegante de restaurante" loading="lazy">
+        </div>
+        <div class="editorial-photo editorial-photo-sm">
+          <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=700&auto=format&fit=crop" alt="Plato servido en un restaurante" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CÓMO FUNCIONA (compacto) ===================== -->
+  <section class="section" id="como-funciona">
+    <div class="wrap">
+      <div class="section-head reveal center">
+        <p class="eyebrow eyebrow-dark">Cómo funciona</p>
+        <h2>Tres pasos para ordenar tu operación.</h2>
+      </div>
+      <div class="timeline reveal">
+        <div class="timeline-item">
+          <span class="timeline-num mono">01</span>
+          <h3>Organiza tus mesas</h3>
+          <p>Registra zona, capacidad y forma de cada mesa.</p>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-num mono">02</span>
+          <h3>Gestiona tus reservas</h3>
+          <p>Asigna reservas sin cruces ni dobles asignaciones.</p>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-num mono">03</span>
+          <h3>Controla tu operación</h3>
+          <p>Sigue el estado del salón en vivo durante el servicio.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA FINAL ===================== -->
+  <section class="cta-final reveal" id="contacto">
+    <div class="wrap cta-final-inner">
+      <p class="eyebrow eyebrow-light">Empieza hoy</p>
+      <h2>Una operación más simple<br>comienza aquí.</h2>
+      <a href="app/mesas/mesas.html" class="btn btn-primary btn-lg">Administrar mis mesas</a>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="footer-name">SABORES URBANOS</span>
+    </div>
+    <nav class="footer-nav">
+      <a href="#inicio">Inicio</a>
+      <a href="#solucion">Solución</a>
+      <a href="#mapa">Funcionalidades</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <span class="footer-copy">© 2026 Sabores Urbanos</span>
+  </div>
+</footer>
+
+<script src="js/script.js"></script>
+</body>
+</html>
