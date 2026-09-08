@@ -1,0 +1,199 @@
+/* Reinicio básico */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Cuerpo */
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #3A2415;
+    background-color: #FBF3E7;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+img {
+    max-width: 100%;
+}
+
+/* Encabezado */
+
+header {
+    background-color: #4E2010;
+    color: #FFFFFF;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    text-align: center;
+}
+
+header img {
+    width: 140px;
+}
+
+header p {
+    color: #F2E1C1;
+    margin-top: 5px;
+}
+
+/* Navegación */
+
+nav {
+    background-color: #D2540C;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+nav a {
+    display: block;
+    padding: 14px 20px;
+    color: #FFFFFF;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Formulario */
+
+#formulario-cliente {
+    padding: 40px 20px;
+    background-color: #F2E1C1;
+}
+
+#formulario-cliente p {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 500px;
+    margin: 0 auto;
+    background-color: #FFFFFF;
+    padding: 25px;
+    border: 1px solid #E0CBA8;
+    border-radius: 8px;
+}
+
+form label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+form small {
+    display: block;
+    margin-top: 5px;
+    color: #6B4F2A;
+    font-size: 12px;
+}
+
+form input,
+form button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #E0CBA8;
+    font-family: inherit;
+    font-size: 15px;
+}
+
+form button {
+    background-color: #D2540C;
+    color: #FFFFFF;
+    border: none;
+    font-weight: bold;
+}
+
+#mensaje {
+    max-width: 500px;
+    margin: 15px auto 0 auto;
+    padding: 12px;
+    text-align: center;
+    background-color: #FFFFFF;
+    border-radius: 5px;
+}
+
+/* Listado de clientes */
+
+#listado-clientes {
+    padding: 40px 20px;
+}
+
+#listado-clientes p {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+table {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    border-collapse: collapse;
+    background-color: #FFFFFF;
+}
+
+th {
+    background-color: #4E2010;
+    color: #F2E1C1;
+    padding: 12px;
+    text-align: left;
+}
+
+td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #E0CBA8;
+}
+
+td button {
+    padding: 6px 12px;
+    border-radius: 5px;
+    border: none;
+    background-color: #D2540C;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+/* Pie de página */
+
+footer {
+    background-color: #4E2010;
+    color: #F2E1C1;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Responsivo para celulares */
+
+@media (max-width: 700px) {
+
+    header {
+        flex-direction: column;
+    }
+
+    nav ul {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    table {
+        font-size: 13px;
+    }
+
+}

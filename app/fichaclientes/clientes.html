@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Clientes | Sabores Urbanos</title>
+
+    <link rel="stylesheet" href="./css/estilos.css">
+</head>
+
+<body>
+
+    <!-- Encabezado -->
+
+    <header>
+        <img src="./img/logo-sabores-urbanos.png" alt="Logo de Sabores Urbanos">
+        <div>
+            <h1>Ficha de Clientes</h1>
+            <p>Sabores Urbanos &mdash; Sistema Web de Gestión Integral para Restaurantes</p>
+        </div>
+    </header>
+
+    <!-- Navegación -->
+
+    <nav>
+        <ul>
+            <li><a href="#formulario-cliente">Registrar cliente</a></li>
+            <li><a href="#listado-clientes">Clientes registrados</a></li>
+        </ul>
+    </nav>
+
+    <!-- Formulario para registrar un cliente -->
+
+    <section id="formulario-cliente">
+
+        <h2>Registrar cliente</h2>
+        <p>Completa los datos del cliente para asociarlo a sus futuras reservas.</p>
+
+        <form id="formCliente">
+
+            <div>
+                <label for="nombre">Nombre completo</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Ej: María Pérez" minlength="8" required>
+            </div>
+
+            <div>
+                <label for="rut">RUT</label>
+                <input type="text" id="rut" name="rut" placeholder="Ej: 12345678-9" minlength="8" required>
+                <small>Sin puntos, con guion. Ejemplo: 12345678-9</small>
+            </div>
+
+            <div>
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="Ej: +56 9 1234 5678">
+            </div>
+
+            <div>
+                <label for="correo">Correo electrónico</label>
+                <input type="email" id="correo" name="correo" placeholder="Ej: correo@ejemplo.cl" required>
+            </div>
+
+            <button type="submit">Registrar cliente</button>
+
+        </form>
+
+        <p id="mensaje"></p>
+
+    </section>
+
+    <!-- Listado de clientes registrados -->
+
+    <section id="listado-clientes">
+
+        <h2>Clientes registrados</h2>
+        <p>Clientes que ha registrado el restaurante hasta el momento.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre completo</th>
+                    <th>RUT</th>
+                    <th>Teléfono</th>
+                    <th>Correo electrónico</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <!-- Las filas se generan con JavaScript -->
+            </tbody>
+        </table>
+
+    </section>
+
+    <!-- Pie de página -->
+
+    <footer>
+        <p>Sabores Urbanos &copy; 2026 &mdash; Ficha de Clientes</p>
+    </footer>
+
+    <script src="./js/script.js"></script>
+
+</body>
+
+</html>
