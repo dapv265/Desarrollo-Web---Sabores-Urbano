@@ -7,7 +7,7 @@ function actualizarReloj() {
 setInterval(actualizarReloj, 1000);
 actualizarReloj();
 
-// FunciÃ³n para mover ticket a "En PreparaciÃ³n"
+// Función para mover ticket a "En Preparación"
 function moverAPreparacion(idTicket) {
     const ticket = document.getElementById(idTicket);
     const listaPreparacion = document.getElementById('lista-preparacion');
@@ -16,19 +16,19 @@ function moverAPreparacion(idTicket) {
     ticket.classList.remove('urgente');
     ticket.classList.add('en-proceso');
     
-    // Cambiar el botÃ³n
+    // Cambiar el botón
     const boton = ticket.querySelector('.btn-accion');
     boton.textContent = 'Marcar como Listo';
     boton.className = 'btn-accion btn-listo';
     
-    // Reemplazar la funciÃ³n del botÃ³n (usando onclick por simplicidad en esta entrega)
+    // Reemplazar la función del botón (usando onclick por simplicidad en esta entrega)
     boton.setAttribute('onclick', `moverAListos('${idTicket}')`);
     
     // Mover el elemento en el DOM
     listaPreparacion.appendChild(ticket);
 }
 
-// FunciÃ³n para mover ticket a "Listos"
+// Función para mover ticket a "Listos"
 function moverAListos(idTicket) {
     const ticket = document.getElementById(idTicket);
     const listaListos = document.getElementById('lista-listos');
@@ -37,7 +37,7 @@ function moverAListos(idTicket) {
     ticket.classList.remove('en-proceso');
     ticket.classList.add('completado');
     
-    // Ocultar o deshabilitar el botÃ³n porque ya terminÃ³ el flujo
+    // Ocultar o deshabilitar el botón porque ya terminó el flujo
     const boton = ticket.querySelector('.btn-accion');
     boton.style.display = 'none';
     
