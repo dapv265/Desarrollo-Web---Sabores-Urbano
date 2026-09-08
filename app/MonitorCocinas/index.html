@@ -4,25 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KDS - Sabores Urbanos</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header class="kds-header">
-        <div class="kds-title">
-            <a class="brand" href="../../index.html"><span class="brand-mark" aria-hidden="true"></span>SABORES URBANOS</a>
+<header class="kds-header">
+        <div class="header-titulo">
+            <!-- Aquí agregamos la etiqueta img apuntando a tu carpeta -->
+            <img src="img/logo.png" alt="Logo corporativo de Sabores Urbanos" class="logo-restaurante">
             <div>
-                <h1>Monitor de cocina</h1>
-                <p>Pedidos en tiempo real</p>
+                <h1>Sabores Urbanos - Monitor de Cocina</h1>
+                <p>Visualización de pedidos en tiempo real</p>
             </div>
         </div>
-        <div class="kds-header-actions">
-            <a class="back-link" href="../../index.html">← Volver al sitio</a>
-            <div class="reloj" id="reloj">--:--:--</div>
-        </div>
-    </header>
+        <div class="reloj" id="reloj">--:--:--</div>
+</header>
 
     <main class="tablero-kds">
         <!-- Columna de Pedidos Pendientes -->
@@ -30,38 +25,84 @@
             <h2 class="titulo-columna pendientes">Pendientes</h2>
             <div class="contenedor-tickets" id="lista-pendientes">
                 
-                <!-- Ticket de Ejemplo -->
-                <article class="ticket urgente" id="ticket-001">
-                    <div class="ticket-header">
-                        <span class="orden">#001 - Salón</span>
-                        <span class="mesa">Mesa 4</span>
-                        <span class="tiempo">Hace 5 min</span>
-                    </div>
-                    <ul class="lista-productos">
-                        <li><strong>2x</strong> Lomo a lo Pobre</li>
-                        <li><strong>1x</strong> Ensalada César
-                            <p class="observacion">Sin crutones, aderezo aparte</p>
-                        </li>
-                    </ul>
-                    <button class="btn-accion btn-preparar" onclick="moverAPreparacion('ticket-001')">
-                        Comenzar Preparación
-                    </button>
-                </article>
+<!-- Ticket 1 -->
+<article class="ticket urgente" id="ticket-001">
+    <div class="ticket-header">
+        <span class="orden">#001 - Salón</span>
+        <span class="mesa">Mesa 4</span>
+        <span class="tiempo">Hace 5 min</span>
+    </div>
+    <ul class="lista-productos">
+        <li>
+            <img src="img/lomoalopobre.png" alt="Plato de lomo a lo pobre" class="foto-plato">
+            <div>
+                <strong>2x</strong> Lomo a lo Pobre
+            </div>
+        </li>
+        <li>
+            <img src="img/ensaladacesar.png" alt="Ensalada César" class="foto-plato">
+            <div>
+                <strong>1x</strong> Ensalada César
+                <p class="observacion">Sin crutones, aderezo aparte</p>
+            </div>
+        </li>
+    </ul>
+    <button class="btn-accion btn-preparar" onclick="moverAPreparacion('ticket-001')">
+        Comenzar Preparación
+    </button>
+</article>
 
-                <article class="ticket" id="ticket-002">
-                    <div class="ticket-header">
-                        <span class="orden">#002 - Para Llevar</span>
-                        <span class="mesa">Cliente: Juan</span>
-                        <span class="tiempo">Hace 2 min</span>
-                    </div>
-                    <ul class="lista-productos">
-                        <li><strong>3x</strong> Hamburguesa Clásica</li>
-                        <li><strong>3x</strong> Papas Fritas</li>
-                    </ul>
-                    <button class="btn-accion btn-preparar" onclick="moverAPreparacion('ticket-002')">
-                        Comenzar Preparación
-                    </button>
-                </article>
+<!-- Ticket 2 -->
+<article class="ticket" id="ticket-002">
+    <div class="ticket-header">
+        <span class="orden">#002 - Para Llevar</span>
+        <span class="mesa">Cliente: Juan</span>
+        <span class="tiempo">Hace 2 min</span>
+    </div>
+    <ul class="lista-productos">
+        <li>
+            <img src="img/hamburgesa.png" alt="Hamburguesa Clásica" class="foto-plato">
+            <div>
+                <strong>3x</strong> Hamburguesa Clásica
+            </div>
+        </li>
+        <li>
+            <img src="img/papas.png" alt="Porción de papas fritas" class="foto-plato">
+            <div>
+                <strong>3x</strong> Papas Fritas
+            </div>
+        </li>
+    </ul>
+    <button class="btn-accion btn-preparar" onclick="moverAPreparacion('ticket-002')">
+        Comenzar Preparación
+    </button>
+</article>
+<!-- Ticket 3 -->
+<article class="ticket" id="ticket-003">
+    <div class="ticket-header">
+        <span class="orden">#003 - Retiro en Tienda</span>
+        <span class="mesa">Cliente: María</span>
+        <span class="tiempo">Hace 1 min</span>
+    </div>
+    <ul class="lista-productos">
+        <li>
+            <img src="img/lomoalopobre.png" alt="Plato de lomo a lo pobre" class="foto-plato">
+            <div>
+                <strong>1x</strong> Lomo a lo Pobre
+                <p class="observacion">Carne bien cocida, sin huevo</p>
+            </div>
+        </li>
+        <li>
+            <img src="img/papas.png" alt="Porción de papas fritas extra" class="foto-plato">
+            <div>
+                <strong>1x</strong> Papas Fritas
+            </div>
+        </li>
+    </ul>
+    <button class="btn-accion btn-preparar" onclick="moverAPreparacion('ticket-003')">
+        Comenzar Preparación
+    </button>
+</article>
 
             </div>
         </section>
@@ -83,6 +124,6 @@
         </section>
     </main>
 
-    <script src="scrip.js"></script>
+    <script src="js/script.js"></script>
 </body>
 </html>
