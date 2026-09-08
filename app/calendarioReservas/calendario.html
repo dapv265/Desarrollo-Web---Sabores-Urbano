@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Calendario de Reservas | Sabores Urbanos
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="calendario.css"
+    >
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+
+<body>
+
+    <main class="pagina-reservas">
+
+
+        
+
+        <section class="contenedor-reservas">
+
+
+            <!-- ENCABEZADO PRINCIPAL -->
+
+            <header class="cabecera-principal-reservas">
+
+                <div class="titulos-cabecera">
+
+                    <span class="etiqueta-reservas">
+                        GESTIÓN DE RESERVAS
+                    </span>
+
+                    <h1>
+                        Calendario de Reservas
+                    </h1>
+
+                </div>
+
+
+                <a
+                    href="index.html"
+                    class="boton-volver-sitio"
+                >
+
+                    <i data-lucide="arrow-left"></i>
+
+                    <span>
+                        Volver al sitio
+                    </span>
+
+                </a>
+
+            </header>
+
+
+
+            <!-- BARRA LATERAL DE FILTROS -->
+
+            <aside class="barra-lateral-reservas">
+
+
+                <!-- VISTA CERRADA -->
+
+                <div class="barra-lateral-mini">
+
+                    <div class="icono-fecha-lateral">
+
+                        <i data-lucide="calendar-heart"></i>
+
+                    </div>
+
+
+                    <i
+                        data-lucide="chevron-right"
+                        class="flecha-desplegar"
+                    ></i>
+
+                </div>
+
+
+
+                <!-- CONTENIDO ABIERTO -->
+
+                <div class="contenido-barra-lateral">
+
+
+                    <!-- TITULO DE LA BARRA LATERAL -->
+
+                    <div class="titulo-selector-fecha">
+
+                        <div class="icono-selector-fecha">
+
+                            <i data-lucide="calendar-days"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                RESERVAS
+                            </span>
+
+                            <h2>
+                                Seleccionar fecha
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- MINI CALENDARIO -->
+
+                    <section class="mini-calendario">
+
+
+                        <div class="navegacion-mini-calendario">
+
+                            <button
+                                type="button"
+                                class="flecha-calendario"
+                            >
+
+                                <i data-lucide="chevron-left"></i>
+
+                            </button>
+
+
+                            <strong>
+                                Octubre 2024
+                            </strong>
+
+
+                            <button
+                                type="button"
+                                class="flecha-calendario"
+                            >
+
+                                <i data-lucide="chevron-right"></i>
+
+                            </button>
+
+                        </div>
+
+
+
+                        <div class="dias-mini-calendario">
+
+                            <span>Lu</span>
+                            <span>Ma</span>
+                            <span>Mi</span>
+                            <span>Ju</span>
+                            <span>Vi</span>
+                            <span>Sá</span>
+                            <span>Do</span>
+
+
+                            <button>1</button>
+                            <button>2</button>
+                            <button>3</button>
+                            <button>4</button>
+                            <button>5</button>
+                            <button>6</button>
+                            <button>7</button>
+
+                            <button>8</button>
+                            <button>9</button>
+                            <button>10</button>
+                            <button>11</button>
+                            <button>12</button>
+                            <button>13</button>
+                            <button>14</button>
+
+                            <button>15</button>
+
+                            <button class="dia-seleccionado">
+                                16
+                            </button>
+
+                            <button>17</button>
+                            <button>18</button>
+                            <button>19</button>
+                            <button>20</button>
+                            <button>21</button>
+
+                            <button>22</button>
+                            <button>23</button>
+                            <button>24</button>
+                            <button>25</button>
+                            <button>26</button>
+                            <button>27</button>
+                            <button>28</button>
+
+                            <button>29</button>
+                            <button>30</button>
+                            <button>31</button>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <div class="separador-lateral"></div>
+
+
+
+                    <!-- FILTRO POR RESTAURANTE -->
+
+                    <section class="seccion-filtro">
+
+                        <label for="restaurante">
+
+                            <i data-lucide="store"></i>
+
+                            Restaurante
+
+                        </label>
+
+
+                        <select id="restaurante">
+
+                            <option>
+                                Sede Centro
+                            </option>
+
+                            <option>
+                                Sede Norte
+                            </option>
+
+                            <option>
+                                Sede Sur
+                            </option>
+
+                        </select>
+
+                    </section>
+
+
+
+                    <!-- FILTRO POR PERSONAS -->
+
+                    <section class="seccion-filtro">
+
+                        <label for="cantidadPersonas">
+
+                            <i data-lucide="users-round"></i>
+
+                            Cantidad de personas
+
+                        </label>
+
+
+                        <select id="cantidadPersonas">
+
+                            <option value="2">
+                                2 personas
+                            </option>
+
+                            <option value="4">
+                                4 personas
+                            </option>
+
+                            <option value="6">
+                                6 personas
+                            </option>
+
+                            <option value="8">
+                                8 personas
+                            </option>
+
+                        </select>
+
+                    </section>
+
+
+
+                    <!-- FILTRO POR ESTADO -->
+
+                    <section class="seccion-filtro">
+
+                        <h3>
+
+                            <i data-lucide="list-filter"></i>
+
+                            Estado
+
+                        </h3>
+
+
+                        <label class="opcion-filtro">
+
+                            <input
+                                type="checkbox"
+                                checked
+                            >
+
+                            <span class="punto-estado confirmada"></span>
+
+                            Confirmada
+
+                        </label>
+
+
+                        <label class="opcion-filtro">
+
+                            <input
+                                type="checkbox"
+                                checked
+                            >
+
+                            <span class="punto-estado pendiente"></span>
+
+                            Pendiente
+
+                        </label>
+
+
+                        <label class="opcion-filtro">
+
+                            <input
+                                type="checkbox"
+                                checked
+                            >
+
+                            <span class="punto-estado en-espera"></span>
+
+                            En espera
+
+                        </label>
+
+
+                        <label class="opcion-filtro">
+
+                            <input
+                                type="checkbox"
+                                checked
+                            >
+
+                            <span class="punto-estado cancelada"></span>
+
+                            Cancelada
+
+                        </label>
+
+                    </section>
+
+
+
+                    <button
+                        type="button"
+                        class="boton-limpiar-filtros"
+                    >
+
+                        <i data-lucide="rotate-ccw"></i>
+
+                        Limpiar filtros
+
+                    </button>
+
+                </div>
+
+            </aside>
+
+
+
+            <!-- AREA PRINCIPAL DEL CALENDARIO -->
+
+            <section class="area-calendario">
+
+
+                <!-- BARRA SUPERIOR DEL CALENDARIO -->
+
+                <div class="barra-superior-calendario">
+
+
+                    <div class="navegacion-fecha">
+
+                        <button type="button">
+
+                            <i data-lucide="chevron-left"></i>
+
+                        </button>
+
+
+                        <h2>
+                            Miércoles, 07 de septiembre de 2026
+                        </h2>
+
+
+                        <button type="button">
+
+                            <i data-lucide="chevron-right"></i>
+
+                        </button>
+
+                    </div>
+
+
+
+                    <div class="acciones-calendario">
+
+
+                        <div class="botones-vista">
+
+                            <button class="vista-activa">
+                                Día
+                            </button>
+
+                            <button>
+                                Semana
+                            </button>
+
+                            <button>
+                                Mes
+                            </button>
+
+                        </div>
+
+
+
+                        <button
+                            type="button"
+                            class="boton-nueva-reserva"
+                            id="abrirModalReserva"
+                        >
+
+                            <i data-lucide="calendar-plus"></i>
+
+                            Nueva reserva
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TABLA DE HORARIOS POR MESA -->
+
+                <div class="contenedor-horarios">
+
+                    <table class="tabla-horarios">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Hora
+                                </th>
+
+                                <th>
+                                    Mesa 1
+                                    <small>2 pers.</small>
+                                </th>
+
+                                <th>
+                                    Mesa 2
+                                    <small>2 pers.</small>
+                                </th>
+
+                                <th>
+                                    Mesa 3
+                                    <small>4 pers.</small>
+                                </th>
+
+                                <th>
+                                    Mesa 4
+                                    <small>4 pers.</small>
+                                </th>
+
+                                <th>
+                                    Mesa 5
+                                    <small>6 pers.</small>
+                                </th>
+
+                                <th>
+                                    Mesa 6
+                                    <small>6 pers.</small>
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                            <!-- 12:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    12:00
+                                </td>
+
+                                <td></td>
+
+                                <td></td>
+
+                                <td>
+
+                                    <article
+                                        class="reserva en-espera"
+                                        data-cliente="Carlos Martínez"
+                                        data-horario="12:00 - 13:00"
+                                        data-personas="4 personas"
+                                        data-mesa="Mesa 3"
+                                    >
+
+                                        <strong>
+                                            Carlos M.
+                                        </strong>
+
+                                        <span>
+                                            12:00 - 13:00
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            4 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 13:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    13:00
+                                </td>
+
+
+                                <td>
+
+                                    <article
+                                        class="reserva confirmada"
+                                        data-cliente="Valentina Rodríguez"
+                                        data-horario="13:00 - 14:30"
+                                        data-personas="2 personas"
+                                        data-mesa="Mesa 1"
+                                    >
+
+                                        <strong>
+                                            Valentina R.
+                                        </strong>
+
+                                        <span>
+                                            13:00 - 14:30
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            2 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+
+                                <td>
+
+                                    <article
+                                        class="reserva pendiente"
+                                        data-cliente="Ana Torres"
+                                        data-horario="13:30 - 15:00"
+                                        data-personas="6 personas"
+                                        data-mesa="Mesa 5"
+                                    >
+
+                                        <strong>
+                                            Ana Torres
+                                        </strong>
+
+                                        <span>
+                                            13:30 - 15:00
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            6 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 14:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    14:00
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 15:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    15:00
+                                </td>
+
+                                <td></td>
+
+
+                                <td>
+
+                                    <article
+                                        class="reserva cancelada"
+                                        data-cliente="Diego Silva"
+                                        data-horario="15:00 - 16:30"
+                                        data-personas="2 personas"
+                                        data-mesa="Mesa 2"
+                                    >
+
+                                        <strong>
+                                            Diego S.
+                                        </strong>
+
+                                        <span>
+                                            15:00 - 16:30
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            2 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 16:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    16:00
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 17:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    17:00
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+
+                                <td>
+
+                                    <article
+                                        class="reserva confirmada"
+                                        data-cliente="Familia López"
+                                        data-horario="17:00 - 19:00"
+                                        data-personas="4 personas"
+                                        data-mesa="Mesa 4"
+                                    >
+
+                                        <strong>
+                                            Familia López
+                                        </strong>
+
+                                        <span>
+                                            17:00 - 19:00
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            4 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 18:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    18:00
+                                </td>
+
+
+                                <td>
+
+                                    <article
+                                        class="reserva pendiente"
+                                        data-cliente="Martín Pérez"
+                                        data-horario="18:30 - 20:00"
+                                        data-personas="2 personas"
+                                        data-mesa="Mesa 1"
+                                    >
+
+                                        <strong>
+                                            Martín P.
+                                        </strong>
+
+                                        <span>
+                                            18:30 - 20:00
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            2 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 19:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    19:00
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+
+                                <td>
+
+                                    <article
+                                        class="reserva en-espera"
+                                        data-cliente="Camila González"
+                                        data-horario="19:00 - 21:00"
+                                        data-personas="6 personas"
+                                        data-mesa="Mesa 5"
+                                    >
+
+                                        <strong>
+                                            Camila G.
+                                        </strong>
+
+                                        <span>
+                                            19:00 - 21:00
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            6 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 20:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    20:00
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+
+                                <td>
+
+                                    <article
+                                        class="reserva confirmada"
+                                        data-cliente="Laura y Andrés"
+                                        data-horario="20:00 - 22:00"
+                                        data-personas="6 personas"
+                                        data-mesa="Mesa 6"
+                                    >
+
+                                        <strong>
+                                            Laura y Andrés
+                                        </strong>
+
+                                        <span>
+                                            20:00 - 22:00
+                                        </span>
+
+                                        <small class="cantidad-personas-reserva">
+
+                                            <i data-lucide="users"></i>
+
+                                            6 personas
+
+                                        </small>
+
+                                    </article>
+
+                                </td>
+
+                            </tr>
+
+
+
+                            <!-- 21:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    21:00
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+
+
+                            <!-- 22:00 -->
+
+                            <tr>
+
+                                <td class="hora">
+                                    22:00
+                                </td>
+
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- PANEL DE DETALLE DE LA RESERVA -->
+
+            <aside class="detalle-reserva">
+
+
+                <div class="encabezado-detalle">
+
+                    <h2>
+
+                        <i data-lucide="clipboard-heart"></i>
+
+                        Detalle de reserva
+
+                    </h2>
+
+
+                    <button
+                        type="button"
+                        class="cerrar-detalle"
+                    >
+
+                        <i data-lucide="x"></i>
+
+                    </button>
+
+                </div>
+
+
+
+                <div class="estado-reserva confirmada">
+
+                    <i data-lucide="circle-check"></i>
+
+                    Confirmada
+
+                </div>
+
+
+
+                <div class="contenido-detalle">
+
+
+                    <div class="avatar-cliente">
+                        VR
+                    </div>
+
+
+                    <h3 id="detalleCliente">
+                        Valentina Rodríguez
+                    </h3>
+
+
+                    <p>
+
+                        <i data-lucide="calendar-days"></i>
+
+                        <span id="detalleFecha">
+                            Miércoles, 16 de octubre de 2024
+                        </span>
+
+                    </p>
+
+
+                    <p>
+
+                        <i data-lucide="clock-3"></i>
+
+                        <span id="detalleHorario">
+                            13:00 - 14:30
+                        </span>
+
+                    </p>
+
+
+                    <p>
+
+                        <i data-lucide="users-round"></i>
+
+                        <span id="detallePersonas">
+                            2 personas
+                        </span>
+
+                    </p>
+
+
+                    <p>
+
+                        <i data-lucide="armchair"></i>
+
+                        <span id="detalleMesa">
+                            Mesa 1
+                        </span>
+
+                    </p>
+
+
+                    <p>
+
+                        <i data-lucide="phone"></i>
+
+                        +56 9 1234 5678
+
+                    </p>
+
+
+                    <p>
+
+                        <i data-lucide="message-circle-heart"></i>
+
+                        Mesa cerca de la ventana,
+                        si es posible.
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- BOTONES VISUALES DEL DETALLE -->
+
+                <div class="acciones-detalle">
+
+
+                    <button
+                        type="button"
+                        class="boton-editar-reserva"
+                    >
+
+                        <i data-lucide="pencil"></i>
+
+                        Editar reserva
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="boton-cambiar-mesa"
+                    >
+
+                        <i data-lucide="refresh-cw"></i>
+
+                        Cambiar de mesa
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="boton-cancelar-reserva"
+                    >
+
+                        <i data-lucide="calendar-x"></i>
+
+                        Cancelar reserva
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- HISTORIAL -->
+
+                <section class="historial-reserva">
+
+                    <h3>
+                        Historial
+                    </h3>
+
+
+                    <div class="elemento-historial">
+
+                        <span class="punto-historial activo"></span>
+
+                        <div>
+
+                            <strong>
+                                Reserva confirmada
+                            </strong>
+
+                            <p>
+                                Hoy, 10:24
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="elemento-historial">
+
+                        <span class="punto-historial"></span>
+
+                        <div>
+
+                            <strong>
+                                Reserva creada
+                            </strong>
+
+                            <p>
+                                Hoy, 10:20
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </aside>
+
+
+        </section>
+
+    </main>
+
+
+
+    <!-- MODAL PARA NUEVA RESERVA -->
+
+    <div
+        class="fondo-modal"
+        id="modalReserva"
+    >
+
+        <section class="modal-reserva">
+
+
+            <div class="encabezado-modal">
+
+
+                <div class="titulo-modal">
+
+
+                    <div class="icono-modal">
+
+                        <i data-lucide="calendar-plus"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <h2>
+                            Nueva reserva
+                        </h2>
+
+                        <p>
+                            Registra los datos del cliente y comprueba la disponibilidad.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="cerrarModalReserva"
+                >
+
+                    <i data-lucide="x"></i>
+
+                </button>
+
+            </div>
+
+
+
+            <form
+                id="formularioReserva"
+                class="formulario-reserva"
+            >
+
+
+                <div class="grupo-formulario campo-completo">
+
+                    <label for="nombreCliente">
+
+                        <i data-lucide="user-round"></i>
+
+                        Cliente
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="nombreCliente"
+                        placeholder="Nombre del cliente"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div class="grupo-formulario">
+
+                    <label for="telefonoCliente">
+
+                        <i data-lucide="phone"></i>
+
+                        Teléfono
+
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="telefonoCliente"
+                        placeholder="+56 9..."
+                    >
+
+                </div>
+
+
+
+                <div class="grupo-formulario">
+
+                    <label for="personasReserva">
+
+                        <i data-lucide="users-round"></i>
+
+                        Personas
+
+                    </label>
+
+                    <select id="personasReserva">
+
+                        <option value="2">
+                            2 personas
+                        </option>
+
+                        <option value="4">
+                            4 personas
+                        </option>
+
+                        <option value="6">
+                            6 personas
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="grupo-formulario">
+
+                    <label for="fechaReserva">
+
+                        <i data-lucide="calendar"></i>
+
+                        Fecha
+
+                    </label>
+
+                    <input
+                        type="date"
+                        id="fechaReserva"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div class="grupo-formulario">
+
+                    <label for="horaReserva">
+
+                        <i data-lucide="clock"></i>
+
+                        Hora
+
+                    </label>
+
+                    <input
+                        type="time"
+                        id="horaReserva"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div class="grupo-formulario">
+
+                    <label for="duracionReserva">
+
+                        <i data-lucide="timer"></i>
+
+                        Duración
+
+                    </label>
+
+                    <select id="duracionReserva">
+
+                        <option value="60">
+                            1 hora
+                        </option>
+
+                        <option value="90">
+                            1 hora 30 minutos
+                        </option>
+
+                        <option value="120">
+                            2 horas
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="grupo-formulario">
+
+                    <label for="mesaReserva">
+
+                        <i data-lucide="armchair"></i>
+
+                        Mesa
+
+                    </label>
+
+                    <select id="mesaReserva">
+
+                        <option value="1">
+                            Mesa 1 - 2 personas
+                        </option>
+
+                        <option value="2">
+                            Mesa 2 - 2 personas
+                        </option>
+
+                        <option value="3">
+                            Mesa 3 - 4 personas
+                        </option>
+
+                        <option value="4">
+                            Mesa 4 - 4 personas
+                        </option>
+
+                        <option value="5">
+                            Mesa 5 - 6 personas
+                        </option>
+
+                        <option value="6">
+                            Mesa 6 - 6 personas
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="grupo-formulario campo-completo">
+
+                    <label for="observacionesReserva">
+
+                        <i data-lucide="message-square-text"></i>
+
+                        Observaciones
+
+                    </label>
+
+                    <textarea
+                        id="observacionesReserva"
+                        rows="3"
+                        placeholder="Ej: mesa cerca de la ventana"
+                    ></textarea>
+
+                </div>
+
+
+
+                <div
+                    class="mensaje-disponibilidad campo-completo"
+                    id="mensajeDisponibilidad"
+                >
+
+                    <i data-lucide="info"></i>
+
+                    <span>
+                        Seleccione fecha, hora y mesa para comprobar disponibilidad.
+                    </span>
+
+                </div>
+
+
+
+                <div class="acciones-modal campo-completo">
+
+
+                    <button
+                        type="button"
+                        id="cancelarModalReserva"
+                    >
+                        Cancelar
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="boton-confirmar-reserva"
+                    >
+
+                        <i data-lucide="heart-handshake"></i>
+
+                        Confirmar reserva
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </div>
+
+
+
+    <script src="calendario.js"></script>
+
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+</body>
+
+</html>
