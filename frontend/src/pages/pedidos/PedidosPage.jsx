@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { mesasData, clientesData, productosData } from '../../data/mockData';
+import { clientesData } from '../../data/clientesData';
+import { mesasIniciales as mesasData } from '../../data/mesasData';
+import { productosIniciales as productosData } from '../../data/menuData';
 import { Plus, Trash2, CheckCircle, AlertCircle, ShoppingBag } from 'lucide-react';
 
 const getStoredPedidos = () => {
-  const stored = localStorage.getItem('pedidos_sabores_urbano');
+  const stored = localStorage.getItem('pedidos_sabores_urbano_v2');
   if (stored) return JSON.parse(stored);
   return [];
 };
 
 const savePedidos = (pedidos) => {
-  localStorage.setItem('pedidos_sabores_urbano', JSON.stringify(pedidos));
+  localStorage.setItem('pedidos_sabores_urbano_v2', JSON.stringify(pedidos));
 };
 
 export default function PedidosPage() {
@@ -18,7 +20,7 @@ export default function PedidosPage() {
   const [clienteId, setClienteId] = useState('');
   
   // Current active order for the selected table
-  const pedidoActual = pedidos.find(p => p.mesaId === parseInt(mesaId) && p.estado !== 'Pagado');
+  const pedidoActual = pedidos.find(p => String(p.mesaId) === String(mesaId) && p.estado !== 'Pagado');
 
   const [productoId, setProductoId] = useState('');
   const [cantidad, setCantidad] = useState(1);
@@ -41,8 +43,8 @@ export default function PedidosPage() {
       return;
     }
 
-    const mesa = mesasData.find(m => m.id === parseInt(mesaId));
-    const cliente = clientesData.find(c => c.id === parseInt(clienteId));
+    const mesa = mesasData.find(m => String(m.id) === String(mesaId));
+    const cliente = clientesData.find(c => String(c.id) === String(clienteId));
 
     const nuevoPedido = {
       id: Date.now(),
@@ -70,7 +72,7 @@ export default function PedidosPage() {
       return;
     }
 
-    const producto = productosData.find(p => p.id === parseInt(productoId));
+    const producto = productosData.find(p => String(p.id) === String(productoId));
     
     // RF10: conservar precio vigente al momento
     const nuevoItem = {
@@ -234,7 +236,7 @@ export default function PedidosPage() {
                             key={p.id}
                             onClick={() => setProductoId(p.id)}
                             className={`cursor-pointer rounded-xl overflow-hidden transition-all border-2 bg-white ${
-                              parseInt(productoId) === p.id 
+                              String(productoId) === String(p.id) 
                                 ? 'border-brand-primary ring-2 ring-brand-primary/20 shadow-md transform scale-[1.02]' 
                                 : 'border-transparent shadow-sm hover:shadow-md'
                             }`}

@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { ChefHat, Clock, Check, UtensilsCrossed } from 'lucide-react';
 
 const getStoredPedidos = () => {
-  const stored = localStorage.getItem('pedidos_sabores_urbano');
+  const stored = localStorage.getItem('pedidos_sabores_urbano_v2');
   if (stored) return JSON.parse(stored);
   return [];
 };
 
 const savePedidos = (pedidos) => {
-  localStorage.setItem('pedidos_sabores_urbano', JSON.stringify(pedidos));
+  localStorage.setItem('pedidos_sabores_urbano_v2', JSON.stringify(pedidos));
 };
 
 import PedidoCard from '../../components/PedidoCard';
