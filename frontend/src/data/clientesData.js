@@ -1,0 +1,47 @@
+export const clientesData = [
+  {
+    id: 1,
+    nombre: "Juan Pérez",
+    telefono: "+56 9 1234 5678",
+    email: "juan.perez@email.com",
+    rut: "12.345.678-9",
+    ultimaReserva: "2026-10-01",
+    estado: "Activo",
+  },
+  {
+    id: 2,
+    nombre: "María González",
+    telefono: "+56 9 8765 4321",
+    email: "maria.gonzalez@email.com",
+    rut: "19.876.543-2",
+    ultimaReserva: "2026-10-05",
+    estado: "Activo",
+  },
+  {
+    id: 3,
+    nombre: "Carlos Soto",
+    telefono: "+56 9 5555 4444",
+    email: "carlos.soto@email.com",
+    rut: "15.444.333-K",
+    ultimaReserva: "2026-09-15",
+    estado: "Inactivo",
+  },
+  {
+    id: 4,
+    nombre: "Ana Martínez",
+    telefono: "+56 9 1111 2222",
+    email: "ana.martinez@email.com",
+    rut: "20.111.222-1",
+    ultimaReserva: "2026-10-06",
+    estado: "Activo",
+  },
+  {
+    id: 5,
+    nombre: "Luis Ramírez",
+    telefono: "+56 9 9999 8888",
+    email: "luis.ramirez@email.com",
+    rut: "11.222.333-4",
+    ultimaReserva: "2026-08-20",
+    estado: "Activo",
+  }
+];

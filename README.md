@@ -1,2 +1,2 @@
 # Desarrollo-Web---Sabores-Urbano
-Este es el proyecto para la materira de desarrollo web y móvil.
+Este es el proyecto para la materia de desarrollo web y móvil.

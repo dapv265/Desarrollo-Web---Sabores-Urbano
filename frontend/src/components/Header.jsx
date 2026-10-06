@@ -10,6 +10,8 @@ const NAV_LINKS = [
   { to: "/menu", label: "Menú" },
   { to: "/pedidos", label: "Pedidos" },
   { to: "/cocina", label: "Cocina" },
+  { to: "/clientes", label: "Clientes" },
+  { to: "/login", label: "Iniciar sesión" },
 ];
 
 export default function Header() {
