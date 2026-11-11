@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
+import { ROLES } from "../auth/roles";
 
 // Ajusta estas rutas a las que definan en App.jsx (deben coincidir con <Route path="...">)
 const NAV_LINKS = [
@@ -12,11 +14,22 @@ const NAV_LINKS = [
   { to: "/restaurantes", label: "Restaurantes" },
   { to: "/clientes", label: "Clientes" },
   { to: "/reportes", label: "Reportes" },
-  { to: "/login", label: "Iniciar sesión" },
 ];
 
 export default function Header() {
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const { session, signOut } = useAuth();
+  const navigate = useNavigate();
+  const usuario = session.usuario;
+  const linksVisibles =
+    usuario.rol === ROLES.COCINA
+      ? NAV_LINKS.filter((link) => link.to !== "/clientes")
+      : NAV_LINKS;
+
+  const handleCerrarSesion = () => {
+    signOut();
+    navigate("/login", { replace: true });
+  };
 
   const linkClase = ({ isActive }) =>
     [
@@ -39,20 +52,24 @@ export default function Header() {
 
         {/* navegación de escritorio */}
         <nav className="hidden md:flex md:items-center md:gap-7">
-          {NAV_LINKS.map((link) => (
+          {linksVisibles.map((link) => (
             <NavLink key={link.to} to={link.to} className={linkClase}>
               {link.label}
             </NavLink>
           ))}
         </nav>
-                {/* chip de usuario — solo visual, sin lógica de login real */}
-        <span className="hidden items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/90 md:flex">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-brand-secondary)] text-[10px] font-bold text-white">
-            A
+        <div className="hidden items-center gap-3 text-xs text-white/90 md:flex">
+          <span className="rounded-full bg-white/10 px-3 py-2">
+            {usuario.rol}
           </span>
-          Administrador de Local
-        </span>
-        
+          <button
+            type="button"
+            className="rounded-md border border-white/30 px-3 py-2 hover:bg-white/10"
+            onClick={handleCerrarSesion}
+          >
+            Cerrar sesión
+          </button>
+        </div>
 
         {/* botón hamburguesa — solo en móvil */}
         <button
@@ -71,7 +88,7 @@ export default function Header() {
       {/* menú móvil desplegable */}
       {menuAbierto && (
         <nav className="flex flex-col gap-1 border-t border-white/10 bg-[var(--color-brand-primary)] px-5 pb-5 pt-2 md:hidden">
-          {NAV_LINKS.map((link) => (
+          {linksVisibles.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -88,6 +105,16 @@ export default function Header() {
               {link.label}
             </NavLink>
           ))}
+          <button
+            type="button"
+            className="rounded-md px-3 py-3 text-left text-sm font-medium text-white/85 hover:bg-white/10"
+            onClick={() => {
+              setMenuAbierto(false);
+              handleCerrarSesion();
+            }}
+          >
+            Cerrar sesión
+          </button>
         </nav>
       )}
     </header>

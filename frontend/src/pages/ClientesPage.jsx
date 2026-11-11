@@ -1,130 +1,383 @@
-import { useState } from 'react';
-import { clientesData } from '../data/clientesData';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { useAuth } from "../auth/useAuth";
+import { ROLES_CLIENTES_GESTION } from "../auth/roles";
+import {
+  actualizarCliente,
+  crearCliente,
+  eliminarCliente,
+  obtenerClientes,
+} from "../services/clientesService";
+
+const FORMULARIO_VACIO = {
+  nombre: "",
+  rut: "",
+  telefono: "",
+  email: "",
+};
+
+function mensajeDeError(error) {
+  const detalles = error.errors
+    ?.map((item) => item.message)
+    .filter(Boolean)
+    .join(" ");
+
+  return detalles ? `${error.message} ${detalles}` : error.message;
+}
+
+function estadoVisible(cliente) {
+  return cliente.activo === false ? "Inactivo" : cliente.estado || "Activo";
+}
 
 const ClientesPage = () => {
-  const [busqueda, setBusqueda] = useState('');
-  const [clientes, setClientes] = useState(clientesData);
+  const [busqueda, setBusqueda] = useState("");
+  const [clientes, setClientes] = useState([]);
   const [mostrarModal, setMostrarModal] = useState(false);
-  
-  // Estado para guardar los datos del nuevo cliente que se está registrando
-  const [nuevoCliente, setNuevoCliente] = useState({
-    nombre: '',
-    rut: '',
-    telefono: '',
-    email: ''
-  });
+  const [clienteEditando, setClienteEditando] = useState(null);
+  const [nuevoCliente, setNuevoCliente] = useState(FORMULARIO_VACIO);
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+  const [errorFormulario, setErrorFormulario] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const { session, signOut } = useAuth();
+  const navigate = useNavigate();
+  const puedeGestionar = ROLES_CLIENTES_GESTION.includes(session.usuario.rol);
 
-  // Filtrar clientes
-  const clientesFiltrados = clientes.filter(cliente => 
-    cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
-    cliente.rut.includes(busqueda)
+  const manejarNoAutorizado = useCallback(
+    (requestError) => {
+      if (requestError.status !== 401) {
+        return false;
+      }
+
+      signOut();
+      navigate("/login", {
+        replace: true,
+        state: { message: "Tu sesión expiró. Inicia sesión nuevamente." },
+      });
+      return true;
+    },
+    [navigate, signOut],
   );
 
-  // Función que se ejecuta al enviar el formulario de registro
-  const handleRegistrarCliente = (e) => {
-    e.preventDefault(); 
-    
-    // Armamos el objeto del nuevo cliente 
-    const clienteCreado = {
-      id: clientes.length + 1, 
-      nombre: nuevoCliente.nombre,
-      rut: nuevoCliente.rut,
-      telefono: nuevoCliente.telefono,
-      email: nuevoCliente.email,
-      ultimaReserva: 'Sin reservas previas', 
-      estado: 'Activo'
+  useEffect(() => {
+    let cancelled = false;
+
+    obtenerClientes(session.token)
+      .then((data) => {
+        if (!cancelled) {
+          setClientes(data);
+        }
+      })
+      .catch((requestError) => {
+        if (!cancelled && !manejarNoAutorizado(requestError)) {
+          setError(mensajeDeError(requestError));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCargando(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [manejarNoAutorizado, session.token]);
+
+  const clientesFiltrados = useMemo(() => {
+    const termino = busqueda.trim().toLowerCase();
+    return clientes.filter(
+      (cliente) =>
+        (cliente.nombre || "").toLowerCase().includes(termino) ||
+        (cliente.rut || "").toLowerCase().includes(termino),
+    );
+  }, [busqueda, clientes]);
+
+  const abrirFormulario = (cliente = null) => {
+    setClienteEditando(cliente);
+    setNuevoCliente(
+      cliente
+        ? {
+            nombre: cliente.nombre || "",
+            rut: cliente.rut || "",
+            telefono: cliente.telefono || "",
+            email: cliente.email || "",
+          }
+        : FORMULARIO_VACIO,
+    );
+    setErrorFormulario("");
+    setMostrarModal(true);
+  };
+
+  const cerrarFormulario = () => {
+    setMostrarModal(false);
+    setClienteEditando(null);
+    setNuevoCliente(FORMULARIO_VACIO);
+    setErrorFormulario("");
+  };
+
+  const handleGuardarCliente = async (event) => {
+    event.preventDefault();
+    setGuardando(true);
+    setErrorFormulario("");
+    setMensaje("");
+
+    const datos = {
+      nombre: nuevoCliente.nombre.trim(),
+      rut: nuevoCliente.rut.trim(),
+      telefono: nuevoCliente.telefono.trim(),
+      email: nuevoCliente.email.trim(),
     };
 
-    // Actualizamos el estado "clientes" agregando el nuevo cliente al final de la lista
-    setClientes([...clientes, clienteCreado]);
-    
-    // Limpiamos los campos del formulario y cerramos el modal
-    setNuevoCliente({ nombre: '', rut: '', telefono: '', email: '' });
-    setMostrarModal(false);
+    try {
+      if (clienteEditando) {
+        const actualizado = await actualizarCliente(
+          session.token,
+          clienteEditando.id,
+          datos,
+        );
+        setClientes((actuales) =>
+          actuales.map((cliente) =>
+            cliente.id === actualizado.id ? actualizado : cliente,
+          ),
+        );
+        setMensaje("Cliente actualizado correctamente.");
+      } else {
+        const creado = await crearCliente(session.token, datos);
+        setClientes((actuales) =>
+          [...actuales, creado].sort((a, b) => a.id - b.id),
+        );
+        setMensaje("Cliente registrado correctamente.");
+      }
+
+      cerrarFormulario();
+    } catch (requestError) {
+      if (!manejarNoAutorizado(requestError)) {
+        setErrorFormulario(mensajeDeError(requestError));
+      }
+    } finally {
+      setGuardando(false);
+    }
   };
+
+  const handleEliminarCliente = async (cliente) => {
+    if (
+      !window.confirm(
+        `¿Marcar a ${cliente.nombre} como inactivo? El registro se conservará.`,
+      )
+    ) {
+      return;
+    }
+
+    setGuardando(true);
+    setError("");
+    setMensaje("");
+
+    try {
+      const actualizado = await eliminarCliente(session.token, cliente.id);
+      setClientes((actuales) =>
+        actuales.map((item) =>
+          item.id === actualizado.id ? actualizado : item,
+        ),
+      );
+      setMensaje("Cliente marcado como inactivo.");
+    } catch (requestError) {
+      if (!manejarNoAutorizado(requestError)) {
+        setError(mensajeDeError(requestError));
+      }
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const accionesCliente = (cliente) =>
+    puedeGestionar ? (
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="rounded-md border px-3 py-1 text-sm hover:bg-gray-100"
+          onClick={() => abrirFormulario(cliente)}
+          disabled={guardando}
+        >
+          Editar
+        </button>
+        {cliente.activo !== false && (
+          <button
+            type="button"
+            className="rounded-md border border-red-200 px-3 py-1 text-sm text-red-700 hover:bg-red-50"
+            onClick={() => handleEliminarCliente(cliente)}
+            disabled={guardando}
+          >
+            Desactivar
+          </button>
+        )}
+      </div>
+    ) : null;
 
   return (
     <div className="page-container relative">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      <div className="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row">
         <h1 className="text-2xl font-bold text-brand-primary">
           Gestión de Clientes
         </h1>
-        
-        <div className="flex flex-col md:flex-row w-full md:w-auto gap-3">
-          {/* Buscador Interactivo */}
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre o RUT..." 
-            className="border p-2 rounded-md w-full md:w-64"
+
+        <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+          <input
+            type="search"
+            aria-label="Buscar clientes por nombre o RUT"
+            placeholder="Buscar por nombre o RUT..."
+            className="w-full rounded-md border p-2 md:w-64"
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(event) => setBusqueda(event.target.value)}
           />
-          {/* Botón para abrir el formulario de registro */}
-          <button 
-            className="btn-primary whitespace-nowrap"
-            onClick={() => setMostrarModal(true)}
-          >
-            + Registrar Cliente
-          </button>
+          {puedeGestionar && (
+            <button
+              type="button"
+              className="btn-primary whitespace-nowrap"
+              onClick={() => abrirFormulario()}
+            >
+              + Registrar Cliente
+            </button>
+          )}
         </div>
       </div>
 
-      {/* MODAL DE REGISTRO DE CLIENTE */}
+      {error && (
+        <p className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      )}
+      {mensaje && (
+        <p className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800" role="status">
+          {mensaje}
+        </p>
+      )}
+
       {mostrarModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="card w-full max-w-md bg-white p-6 relative">
-            <h2 className="text-xl font-bold mb-4 text-brand-primary">
-              Registrar Nuevo Cliente
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div
+            className="card relative w-full max-w-md bg-white p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cliente-modal-title"
+          >
+            <h2
+              id="cliente-modal-title"
+              className="mb-4 text-xl font-bold text-brand-primary"
+            >
+              {clienteEditando ? "Editar Cliente" : "Registrar Nuevo Cliente"}
             </h2>
-            
-            <form onSubmit={handleRegistrarCliente} className="flex flex-col gap-4">
+
+            {errorFormulario && (
+              <p className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {errorFormulario}
+              </p>
+            )}
+
+            <form
+              onSubmit={handleGuardarCliente}
+              className="flex flex-col gap-4"
+            >
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold">Nombre Completo</label>
-                <input 
-                  type="text" required placeholder="Ej: Juan Pérez"
-                  className="border p-2 rounded-md"
+                <label htmlFor="cliente-nombre" className="text-sm font-semibold">
+                  Nombre Completo
+                </label>
+                <input
+                  id="cliente-nombre"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  placeholder="Ej: Juan Pérez"
+                  className="rounded-md border p-2"
                   value={nuevoCliente.nombre}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, nombre: e.target.value})}
+                  onChange={(event) =>
+                    setNuevoCliente({
+                      ...nuevoCliente,
+                      nombre: event.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold">RUT</label>
-                <input 
-                  type="text" required placeholder="Ej: 12.345.678-9"
-                  className="border p-2 rounded-md"
+                <label htmlFor="cliente-rut" className="text-sm font-semibold">
+                  RUT
+                </label>
+                <input
+                  id="cliente-rut"
+                  type="text"
+                  required
+                  placeholder="Ej: 12.345.678-9"
+                  className="rounded-md border p-2"
                   value={nuevoCliente.rut}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, rut: e.target.value})}
+                  onChange={(event) =>
+                    setNuevoCliente({ ...nuevoCliente, rut: event.target.value })
+                  }
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold">Teléfono</label>
-                <input 
-                  type="text" required placeholder="+56 9..."
-                  className="border p-2 rounded-md"
+                <label
+                  htmlFor="cliente-telefono"
+                  className="text-sm font-semibold"
+                >
+                  Teléfono
+                </label>
+                <input
+                  id="cliente-telefono"
+                  type="tel"
+                  required
+                  placeholder="+56 9..."
+                  className="rounded-md border p-2"
                   value={nuevoCliente.telefono}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, telefono: e.target.value})}
+                  onChange={(event) =>
+                    setNuevoCliente({
+                      ...nuevoCliente,
+                      telefono: event.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold">Correo Electrónico</label>
-                <input 
-                  type="email" required placeholder="correo@ejemplo.com"
-                  className="border p-2 rounded-md"
+                <label htmlFor="cliente-email" className="text-sm font-semibold">
+                  Correo Electrónico
+                </label>
+                <input
+                  id="cliente-email"
+                  type="email"
+                  required
+                  placeholder="correo@ejemplo.com"
+                  className="rounded-md border p-2"
                   value={nuevoCliente.email}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, email: e.target.value})}
+                  onChange={(event) =>
+                    setNuevoCliente({
+                      ...nuevoCliente,
+                      email: event.target.value,
+                    })
+                  }
                 />
               </div>
-              
-              <div className="flex justify-end gap-2 mt-4">
-                <button 
-                  type="button" 
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100"
-                  onClick={() => setMostrarModal(false)}
+
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                  onClick={cerrarFormulario}
+                  disabled={guardando}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
-                  Guardar Cliente
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={guardando}
+                >
+                  {guardando
+                    ? "Guardando..."
+                    : clienteEditando
+                      ? "Guardar Cambios"
+                      : "Guardar Cliente"}
                 </button>
               </div>
             </form>
@@ -132,71 +385,111 @@ const ClientesPage = () => {
         </div>
       )}
 
-      {/* Vista Responsiva: Tarjetas en celular, Tabla en Desktop */}
-      
-      {/* 1. Vista de Tarjetas para Celulares */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {clientesFiltrados.map((cliente) => (
-          <div key={cliente.id} className="card flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg">{cliente.nombre}</h3>
-              <span className={`badge ${cliente.estado === 'Activo' ? 'badge-disponible' : 'badge-ocupado'}`}>
-                {cliente.estado}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600"><strong>RUT:</strong> {cliente.rut}</p>
-            <p className="text-sm text-gray-600"><strong>Tel:</strong> {cliente.telefono}</p>
-            <p className="text-sm text-gray-600"><strong>Email:</strong> {cliente.email}</p>
-            <p className="text-sm text-gray-600"><strong>Última Reserva:</strong> {cliente.ultimaReserva}</p>
+      {cargando ? (
+        <p className="py-8 text-center text-gray-600" role="status">
+          Cargando clientes...
+        </p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {clientesFiltrados.map((cliente) => {
+              const estado = estadoVisible(cliente);
+              return (
+                <div key={cliente.id} className="card flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-lg font-bold">{cliente.nombre}</h2>
+                    <span
+                      className={`badge ${estado === "Activo" ? "badge-disponible" : "badge-ocupado"}`}
+                    >
+                      {estado}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    <strong>RUT:</strong> {cliente.rut}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Tel:</strong> {cliente.telefono}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Email:</strong> {cliente.email}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Última Reserva:</strong>{" "}
+                    {cliente.ultimaReserva || "Sin reservas previas"}
+                  </p>
+                  {accionesCliente(cliente)}
+                </div>
+              );
+            })}
+            {clientesFiltrados.length === 0 && (
+              <p className="text-center text-gray-500">
+                No se encontraron clientes.
+              </p>
+            )}
           </div>
-        ))}
-        {clientesFiltrados.length === 0 && (
-          <p className="text-center text-gray-500">No se encontraron clientes.</p>
-        )}
-      </div>
 
-      {/* 2. Vista de Tabla para Tablets/Desktop */}
-      <div className="hidden md:block card">
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
-                <th className="py-3 px-4">Nombre</th>
-                <th className="py-3 px-4">RUT</th>
-                <th className="py-3 px-4">Teléfono</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Última Reserva</th>
-                <th className="py-3 px-4">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clientesFiltrados.length > 0 ? (
-                clientesFiltrados.map((cliente) => (
-                  <tr key={cliente.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium">{cliente.nombre}</td>
-                    <td className="py-3 px-4 text-sm">{cliente.rut}</td>
-                    <td className="py-3 px-4 text-sm">{cliente.telefono}</td>
-                    <td className="py-3 px-4 text-sm">{cliente.email}</td>
-                    <td className="py-3 px-4 text-sm">{cliente.ultimaReserva}</td>
-                    <td className="py-3 px-4">
-                      <span className={`badge ${cliente.estado === 'Activo' ? 'badge-disponible' : 'badge-ocupado'}`}>
-                        {cliente.estado}
-                      </span>
-                    </td>
+          <div className="card hidden md:block">
+            <div className="table-responsive">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+                    <th className="px-4 py-3">Nombre</th>
+                    <th className="px-4 py-3">RUT</th>
+                    <th className="px-4 py-3">Teléfono</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3">Última Reserva</th>
+                    <th className="px-4 py-3">Estado</th>
+                    {puedeGestionar && <th className="px-4 py-3">Acciones</th>}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-500">
-                    No se encontraron clientes.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+                </thead>
+                <tbody>
+                  {clientesFiltrados.map((cliente) => {
+                    const estado = estadoVisible(cliente);
+                    return (
+                      <tr
+                        key={cliente.id}
+                        className="border-b hover:bg-gray-50"
+                      >
+                        <td className="px-4 py-3 font-medium">
+                          {cliente.nombre}
+                        </td>
+                        <td className="px-4 py-3 text-sm">{cliente.rut}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {cliente.telefono}
+                        </td>
+                        <td className="px-4 py-3 text-sm">{cliente.email}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {cliente.ultimaReserva || "Sin reservas previas"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`badge ${estado === "Activo" ? "badge-disponible" : "badge-ocupado"}`}
+                          >
+                            {estado}
+                          </span>
+                        </td>
+                        {puedeGestionar && (
+                          <td className="px-4 py-3">{accionesCliente(cliente)}</td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                  {clientesFiltrados.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={puedeGestionar ? 7 : 6}
+                        className="py-4 text-center text-gray-500"
+                      >
+                        No se encontraron clientes.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
