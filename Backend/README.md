@@ -10,11 +10,14 @@ Módulo de reservas de la vista de calendario (`frontend/src/pages/ReservasPage.
 
 Requisitos: Node.js 20 o superior y MongoDB (local o Atlas).
 
-1. Crear `Backend/.env` con:
+1. Crear `Backend/.env` (puedes copiar `Backend/.env.example`) con:
 
    ```env
    MONGO_URI=mongodb://127.0.0.1:27017/sabores_urbanos
    PORT=5000
+   FRONTEND_ORIGIN=http://localhost:5173
+   JWT_SECRET=reemplazar-con-secreto-largo-aleatorio
+   JWT_EXPIRES_IN=1d
    ```
 
 2. Instalar dependencias e iniciar el servidor:
@@ -109,3 +112,47 @@ Al crear, editar o reactivar una reserva (salvo que quede `cancelada`):
 Errores de validación del modelo → 400 con un arreglo `errores`. Además, un índice único `{ mesa, fecha, inicio }` (solo para reservas no canceladas) protege ante peticiones simultáneas → 409.
 
 Las reservas no modifican el `estado` de las mesas: ese estado lo maneja el módulo de mesas.
+
+---
+
+## Autenticación y Clientes
+
+Módulo de autenticación con JWT (`POST /api/auth/login`, `POST /api/auth/register`, `GET /api/auth/perfil`) y gestión de clientes (`/api/clientes`).
+
+### Seed de usuarios y clientes
+
+Con MongoDB disponible y desde `Backend/`:
+
+```bash
+npm run seed:clientes
+```
+
+Este comando **borra y vuelve a crear** únicamente las colecciones `usuarios` y `clientes` (asegurando que existan los restaurantes `LOC-01`, `LOC-02` y `LOC-03` sin borrar reportes ni mesas/reservas).
+
+Perfiles de desarrollo cargados (contraseña compartida: `SaboresDev2026!`):
+
+| Perfil | Correo | Restaurante |
+| --- | --- | --- |
+| Administrador General | `admin.general@saboresurbanos.dev` | Sin restaurante |
+| Administrador de Local | `admin.local@saboresurbanos.dev` | Sucursal Santiago Centro (`LOC-01`) |
+| Garzón | `garzon@saboresurbanos.dev` | Sucursal Santiago Centro (`LOC-01`) |
+| Cocina | `cocina@saboresurbanos.dev` | Sucursal Providencia (`LOC-02`) |
+
+### Endpoints de Auth y Clientes
+
+Base: `http://localhost:5000/api` (salvo el login, requieren `Authorization: Bearer <token>`).
+
+| Método | Ruta | Acceso |
+| --- | --- | --- |
+| `POST` | `/auth/login` | Público |
+| `POST` | `/auth/register` | Solo Administrador General |
+| `GET` | `/auth/perfil` | Cualquier usuario autenticado |
+| `GET` | `/clientes` | Administrador General, Administrador de Local o Garzón |
+| `GET` | `/clientes/:id` | Administrador General, Administrador de Local o Garzón |
+| `POST` | `/clientes` | Administrador General o Administrador de Local |
+| `PUT` | `/clientes/:id` | Administrador General o Administrador de Local |
+| `DELETE` | `/clientes/:id` | Administrador General o Administrador de Local; baja lógica |
+
+### Pruebas con Postman (Auth y Clientes)
+
+Importa `Backend/postman/SaboresUrbanos-AuthClientes.postman_collection.json` en Postman. Ejecuta primero **Login Administrador General** para guardar el JWT en `{{token}}`.
