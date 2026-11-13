@@ -1,51 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, Clock, Check, UtensilsCrossed } from 'lucide-react';
-
-const getStoredPedidos = () => {
-  const stored = localStorage.getItem('pedidos_sabores_urbano_v2');
-  if (stored) return JSON.parse(stored);
-  return [];
-};
-
-const savePedidos = (pedidos) => {
-  localStorage.setItem('pedidos_sabores_urbano_v2', JSON.stringify(pedidos));
-};
-
+import { ChefHat, Check, UtensilsCrossed } from 'lucide-react';
 import PedidoCard from '../../components/PedidoCard';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/pedidos';
 
 export default function CocinaPage() {
   const [pedidos, setPedidos] = useState([]);
 
-  // Load periodically to simulate real-time kitchen display (RF11)
   useEffect(() => {
-    const loadPedidos = () => {
-      setPedidos(getStoredPedidos());
+    const loadPedidos = async () => {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        setPedidos(data);
+      } catch (error) {
+        console.error('Error al cargar pedidos:', error);
+      }
     };
+
     loadPedidos();
-    const interval = setInterval(loadPedidos, 3000); // refresh every 3 seconds
+    const interval = setInterval(loadPedidos, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleUpdateStatus = (pedidoId, nuevoEstado) => {
-    const updatedPedidos = pedidos.map(p => {
-      if (p.id === pedidoId) {
-        return { 
-          ...p, 
-          estado: nuevoEstado,
-          items: p.items.map(item => {
-            if (nuevoEstado === 'Listo') return { ...item, estado: 'Listo' };
-            if (nuevoEstado === 'Preparando' && item.estado === 'Pendiente') return { ...item, estado: 'Preparando' };
-            return item;
-          })
-        };
-      }
-      return p;
+  const handleUpdateStatus = async (pedidoId, nuevoEstado) => {
+    const pedido = pedidos.find(p => (p._id || p.id) === pedidoId);
+    if (!pedido) return;
+
+    const itemsActualizados = pedido.items.map(item => {
+      if (nuevoEstado === 'Listo') return { ...item, estado: 'Listo' };
+      if (nuevoEstado === 'Preparando' && item.estado === 'Pendiente') return { ...item, estado: 'Preparando' };
+      return item;
     });
-    setPedidos(updatedPedidos);
-    savePedidos(updatedPedidos);
+
+    try {
+      const res = await fetch(`${API_URL}/${pedidoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado, items: itemsActualizados })
+      });
+      const pedidoActualizado = await res.json();
+      setPedidos(pedidos.map(p => ((p._id || p.id) === pedidoId ? pedidoActualizado : p)));
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+    }
   };
 
-  // Cocina solo ve pedidos que no estén "Pagado" (y filtramos los que no tienen items)
   const pedidosCocina = pedidos.filter(p => p.items.length > 0 && p.estado !== 'Listo' && p.estado !== 'Pagado');
   const pedidosListos = pedidos.filter(p => p.items.length > 0 && p.estado === 'Listo');
 
@@ -77,7 +77,7 @@ export default function CocinaPage() {
         </div>
 
         <h2 className="text-2xl text-brand-primary mb-6 border-b-2 border-brand-primary pb-2 inline-block font-bold">Pedidos Activos</h2>
-        
+
         {pedidosCocina.length === 0 ? (
           <div className="bg-white p-12 text-center rounded-xl shadow-sm border border-gray-200">
             <UtensilsCrossed className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -87,7 +87,7 @@ export default function CocinaPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {pedidosCocina.map(pedido => (
-              <PedidoCard key={pedido.id} pedido={pedido} onUpdateStatus={handleUpdateStatus} />
+              <PedidoCard key={pedido._id || pedido.id} pedido={pedido} onUpdateStatus={handleUpdateStatus} />
             ))}
           </div>
         )}
@@ -97,7 +97,7 @@ export default function CocinaPage() {
             <h2 className="text-2xl text-gray-600 mb-6 border-b-2 border-gray-200 pb-2 inline-block font-bold">Recientemente Listos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 opacity-70">
               {pedidosListos.map(pedido => (
-                <div key={pedido.id} className="bg-white rounded-xl shadow-sm p-4 flex justify-between items-center border border-gray-200">
+                <div key={pedido._id || pedido.id} className="bg-white rounded-xl shadow-sm p-4 flex justify-between items-center border border-gray-200">
                   <div>
                     <h4 className="font-bold text-gray-800">{pedido.mesaNombre}</h4>
                     <p className="text-sm text-gray-500">{pedido.items.length} productos</p>
