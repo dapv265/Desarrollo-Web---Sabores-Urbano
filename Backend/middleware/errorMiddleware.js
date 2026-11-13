@@ -13,6 +13,14 @@ export function errorHandler(error, req, res, next) {
       message = 'El RUT ya está registrado.';
     } else if (duplicateFields.includes('id')) {
       message = 'Ya existe un cliente con ese identificador.';
+    } else if (duplicateFields.includes('codigo')) {
+      message = 'Ya existe un restaurante con ese código.';
+    } else if (
+      duplicateFields.includes('periodo') &&
+      duplicateFields.includes('restaurante')
+    ) {
+      message =
+        'Ya existe un reporte para ese restaurante en el período indicado.';
     }
 
     return res.status(409).json({ success: false, message });

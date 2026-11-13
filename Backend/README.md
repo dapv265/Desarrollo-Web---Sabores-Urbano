@@ -156,3 +156,43 @@ Base: `http://localhost:5000/api` (salvo el login, requieren `Authorization: Bea
 ### Pruebas con Postman (Auth y Clientes)
 
 Importa `Backend/postman/SaboresUrbanos-AuthClientes.postman_collection.json` en Postman. Ejecuta primero **Login Administrador General** para guardar el JWT en `{{token}}`.
+
+---
+
+## Restaurantes y Reportes
+
+Módulo CRUD para sucursales (`/api/restaurantes`) y reportes mensuales (`/api/reportes`).
+
+### Seed y pruebas automatizadas
+
+```bash
+npm run seed   # Carga 3 restaurantes (LOC-01..LOC-03) y 3 reportes (2026-10)
+npm test       # Ejecuta las pruebas de integración con MongoDB en memoria
+```
+
+### Endpoints de Restaurantes (`/api/restaurantes`)
+
+| Método | Ruta | Descripción | Respuestas |
+|---|---|---|---|
+| `GET` | `/` | Lista restaurantes ordenados por código. Filtros opcionales: `?estado`, `?buscar` | 200, 400 |
+| `GET` | `/codigo/:codigo` | Obtiene un restaurante por código (`LOC-01`) | 200, 400, 404 |
+| `GET` | `/:id` | Obtiene un restaurante por ObjectId | 200, 400, 404 |
+| `POST` | `/` | Crea un restaurante | 201, 400, 409 |
+| `PUT` | `/:id` | Actualiza los campos enviados de un restaurante | 200, 400, 404, 409 |
+| `PATCH` | `/:id/estado` | Cambia el estado (`Operativo`, `En Mantención`, `Cerrado`, `Fuera de Servicio`) | 200, 400, 404 |
+| `DELETE` | `/:id` | Elimina un restaurante | 200, 400, 404 |
+
+### Endpoints de Reportes (`/api/reportes`)
+
+| Método | Ruta | Descripción | Respuestas |
+|---|---|---|---|
+| `GET` | `/` | Lista reportes con restaurante poblado. Filtros opcionales: `?periodo=AAAA-MM`, `?restaurante=<ObjectId>` | 200, 400 |
+| `GET` | `/resumen` | Devuelve KPIs consolidados (`ventasTotales`, `pedidosTotales`, `ocupacionPromedio`, `platoEstrella`), `ventasPorLocal` y `topPlatos`. Filtros opcionales: `?periodo`, `?restaurante` | 200, 400 |
+| `GET` | `/:id` | Obtiene un reporte por ObjectId | 200, 400, 404 |
+| `POST` | `/` | Crea un reporte asociado a un restaurante existente | 201, 400, 404, 409 |
+| `PUT` | `/:id` | Actualiza los campos enviados de un reporte | 200, 400, 404, 409 |
+| `DELETE` | `/:id` | Elimina un reporte | 200, 400, 404 |
+
+### Pruebas con Postman (Restaurantes y Reportes)
+
+Importa `Backend/postman/SaboresUrbanos-RestaurantesReportes.postman_collection.json` y `Backend/postman/SaboresUrbanos-Local.postman_environment.json` en Postman.

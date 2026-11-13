@@ -1,0 +1,242 @@
+{
+  "info": {
+    "_postman_id": "2c8d1f3a-7b4e-4c9a-9a1e-6f8b2d4c7e20",
+    "name": "Sabores Urbanos - Restaurantes y Reportes",
+    "description": "Pruebas CRUD para /api/restaurantes y /api/reportes.\n\nAntes de ejecutar: `npm run seed` y `npm start` en Backend/. Seleccionar el environment \"SaboresUrbanos-Local\".",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "restauranteId",
+      "value": "672000000000000000000001",
+      "type": "string"
+    },
+    {
+      "key": "nuevoRestauranteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reporteId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Restaurantes",
+      "item": [
+        {
+          "name": "Listar restaurantes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Devuelve arreglo de restaurantes', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/restaurantes"
+          }
+        },
+        {
+          "name": "Filtrar restaurantes por estado y búsqueda",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/restaurantes?estado=Operativo&buscar=Providencia"
+          }
+        },
+        {
+          "name": "Obtener restaurante por código",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/restaurantes/codigo/LOC-01"
+          }
+        },
+        {
+          "name": "Crear restaurante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('nuevoRestauranteId', json.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"LOC-04\",\n  \"nombre\": \"Sucursal Ñuñoa\",\n  \"direccion\": \"Av. Irarrázaval 2000, Ñuñoa\",\n  \"telefono\": \"+56 2 2333 4455\",\n  \"horario\": \"12:00 - 23:30\",\n  \"capacidadMesas\": 16,\n  \"estado\": \"Operativo\"\n}"
+            },
+            "url": "{{baseUrl}}/api/restaurantes"
+          }
+        },
+        {
+          "name": "Obtener restaurante creado por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/restaurantes/{{nuevoRestauranteId}}"
+          }
+        },
+        {
+          "name": "Actualizar restaurante",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sucursal Ñuñoa Plaza\",\n  \"capacidadMesas\": 22\n}"
+            },
+            "url": "{{baseUrl}}/api/restaurantes/{{nuevoRestauranteId}}"
+          }
+        },
+        {
+          "name": "Cambiar estado de restaurante",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"En Mantención\"\n}"
+            },
+            "url": "{{baseUrl}}/api/restaurantes/{{nuevoRestauranteId}}/estado"
+          }
+        },
+        {
+          "name": "Eliminar restaurante creado",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/restaurantes/{{nuevoRestauranteId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Listar reportes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reportes"
+          }
+        },
+        {
+          "name": "Obtener resumen consolidado de reportes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reportes/resumen?periodo=2026-10"
+          }
+        },
+        {
+          "name": "Crear reporte",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('reporteId', json.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"2026-11\",\n  \"restaurante\": \"{{restauranteId}}\",\n  \"pedidosTotales\": 450,\n  \"ventasTotales\": 6700000,\n  \"tasaOcupacion\": 81,\n  \"platosMasVendidos\": [\n    {\n      \"nombre\": \"Lomo a lo Pobre Urbano\",\n      \"categoria\": \"Fondos\",\n      \"cantidad\": 140,\n      \"totalRecaudado\": 1820000\n    }\n  ],\n  \"observaciones\": \"Cierre mensual noviembre\"\n}"
+            },
+            "url": "{{baseUrl}}/api/reportes"
+          }
+        },
+        {
+          "name": "Obtener reporte por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reportes/{{reporteId}}"
+          }
+        },
+        {
+          "name": "Actualizar reporte",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidosTotales\": 475,\n  \"ventasTotales\": 7100000,\n  \"tasaOcupacion\": 84\n}"
+            },
+            "url": "{{baseUrl}}/api/reportes/{{reporteId}}"
+          }
+        },
+        {
+          "name": "Eliminar reporte creado",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/reportes/{{reporteId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
