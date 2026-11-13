@@ -8,10 +8,10 @@
     "dev": "node --watch server.js",
     "seed": "node seeds/seed.js",
     "seed:mesas": "node seeds/seedMesas.js",
-    "seed:pedidos": "node seeds/seedPedidos.js"
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "seed": "node seeds/seed.js",
+    "seed:pedidos": "node seeds/seedPedidos.js",
     "seed:reservas": "node seeds/seedReservas.js",
+    "seed:clientes": "node seeds/seedClientes.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "test:reservas": "newman run postman/SaboresUrbanos-Reservas.postman_collection.json -e postman/SaboresUrbanos-Local.postman_environment.json"
   },
   "keywords": [],
@@ -19,13 +19,16 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.6",
     "dotenv": "^18.0.10",
     "express": "^5.3.0",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.12.1"
   },
   "devDependencies": {
-    "mongodb-memory-server": "^11.3.0"
+    "mongodb-memory-server": "^11.3.0",
     "newman": "^6.2.3"
   }
 }

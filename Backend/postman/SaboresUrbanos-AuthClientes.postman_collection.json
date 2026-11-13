@@ -1,0 +1,363 @@
+{
+  "info": {
+    "_postman_id": "54292232-07b1-4d86-b9a0-c62b6aa2be79",
+    "name": "Sabores Urbanos - Auth y Clientes",
+    "description": "Colección de desarrollo para autenticación y clientes. Las credenciales incluidas son solo para desarrollo local y requieren ejecutar npm run seed:clientes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string",
+      "description": "URL base local del backend."
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT guardado automáticamente por los tests de login."
+    },
+    {
+      "key": "restauranteId",
+      "value": "672000000000000000000001",
+      "type": "string",
+      "description": "ID de restaurante de desarrollo (se actualiza automáticamente al loguear con admin local)."
+    },
+    {
+      "key": "demoAdminEmail",
+      "value": "admin.general@saboresurbanos.dev",
+      "type": "string",
+      "description": "Usuario seed de desarrollo; no usar en producción."
+    },
+    {
+      "key": "demoKitchenEmail",
+      "value": "cocina@saboresurbanos.dev",
+      "type": "string",
+      "description": "Usuario seed de desarrollo para comprobar el rol sin permiso."
+    },
+    {
+      "key": "demoPassword",
+      "value": "SaboresDev2026!",
+      "type": "string",
+      "description": "Contraseña fija exclusivamente para desarrollo local."
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login Administrador General",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"El login responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.test(\"La respuesta contiene un token JWT\", function () {",
+                  "  pm.expect(response.success).to.eql(true);",
+                  "  pm.expect(response.data.token).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set(\"token\", response.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{demoAdminEmail}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Inicia sesión con el Administrador General demo y guarda el JWT de la respuesta en la variable de colección {{token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar Administrador de Local",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Administrador Local Postman\",\n  \"email\": \"admin.local.postman@saboresurbanos.dev\",\n  \"password\": \"CambioSoloDesarrollo2026!\",\n  \"rol\": \"Administrador de Local\",\n  \"restaurante\": \"{{restauranteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Ejemplo válido de registro, accesible solo con token de Administrador General."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener perfil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/perfil",
+            "description": "Devuelve el perfil asociado al token; nunca incluye el password."
+          },
+          "response": []
+        }
+      ],
+      "description": "Login, registro administrativo y consulta del perfil."
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/clientes",
+            "description": "Lista clientes dentro del alcance del restaurante del usuario; Administrador General tiene alcance global."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/clientes/1",
+            "description": "El seed crea clientes con IDs enteros del 1 al 5."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Postman Demo\",\n  \"telefono\": \"+56 9 2222 3344\",\n  \"email\": \"cliente.postman@saboresurbanos.dev\",\n  \"rut\": \"21.234.567-8\",\n  \"ultimaReserva\": \"Sin reservas previas\",\n  \"estado\": \"Activo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/clientes",
+            "description": "Ejemplo válido para Administrador General o Administrador de Local. Email y RUT deben ser únicos. Un Administrador General puede omitir restaurante."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"+56 9 3333 4455\",\n  \"estado\": \"Activo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/clientes/1",
+            "description": "Actualiza únicamente los campos enviados del cliente 1. Para el Administrador Local, el cliente debe pertenecer a su restaurante."
+          },
+          "response": []
+        },
+        {
+          "name": "Desactivar cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/clientes/5",
+            "description": "Realiza una baja lógica; responde con el documento cuyo campo activo queda en false y estado en Inactivo."
+          },
+          "response": []
+        }
+      ],
+      "description": "Operaciones disponibles para los roles autorizados."
+    },
+    {
+      "name": "Casos de error",
+      "item": [
+        {
+          "name": "Registrar email duplicado (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"El email duplicado responde 409\", function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().message).to.include(\"correo electrónico ya está registrado\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cuenta Duplicada\",\n  \"email\": \"{{demoAdminEmail}}\",\n  \"password\": \"CambioSoloDesarrollo2026!\",\n  \"rol\": \"Administrador General\",\n  \"restaurante\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Con un token de Administrador General, intenta registrar el email ya creado por el seed. Se espera HTTP 409."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar clientes sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"La solicitud sin token responde 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/clientes",
+            "description": "Comprueba que los endpoints de clientes requieren autenticación. Se espera HTTP 401."
+          },
+          "response": []
+        },
+        {
+          "name": "Login Cocina (para probar rol sin permiso)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"El login de Cocina responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set(\"token\", response.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{demoKitchenEmail}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Guarda un token con rol Cocina en {{token}} para la siguiente prueba."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar clientes con rol Cocina (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Cocina no puede acceder a clientes\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/clientes",
+            "description": "Ejecuta después de Login Cocina. El middleware de roles debe responder HTTP 403."
+          },
+          "response": []
+        }
+      ],
+      "description": "Pruebas manuales de errores previstos por los controladores y middlewares."
+    }
+  ]
+}
