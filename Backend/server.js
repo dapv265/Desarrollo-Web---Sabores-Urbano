@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import mesaRoutes from './routes/mesaRoutes.js';
 import pedidoRoutes from './routes/pedidoRoutes.js';
+import reservaRoutes from './routes/reservaRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/mesas', mesaRoutes);
 app.use('/api/pedidos', pedidoRoutes);
+app.use('/api/reservas', reservaRoutes);
 
 const iniciarServidor = async () => {
   await connectDB();

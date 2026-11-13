@@ -1,0 +1,930 @@
+{
+  "info": {
+    "_postman_id": "6c1f3a52-8a4e-4b7e-9d1a-5a0e2b7c3f10",
+    "name": "Sabores Urbanos - Reservas",
+    "description": "Pruebas del backend de reservas (/api/reservas).\n\nAntes de ejecutar: `node seeds/seedMesas.js`, `npm run seed:reservas` y `node server.js`. Seleccionar el environment \"SaboresUrbanos-Local\".\n\nEjecutar las carpetas en orden: \"1. CRUD\" guarda el id de la reserva creada en {{reservaId}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. CRUD",
+      "description": "Flujo completo: listar, filtrar, comprobar disponibilidad, crear, obtener, editar, cambiar estado y eliminar.",
+      "item": [
+        {
+          "name": "API funcionando",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensaje de API funcionando', function () {",
+                  "  pm.expect(pm.response.json().mensaje).to.include('funcionando');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": "Comprueba que el servidor está activo."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar reservas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Devuelve total y arreglo de reservas', function () {",
+                  "  const datos = pm.response.json();",
+                  "  pm.expect(datos.reservas).to.be.an('array');",
+                  "  pm.expect(datos.total).to.eql(datos.reservas.length);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "Lista todas las reservas ordenadas por fecha e inicio. Responde { total, reservas }."
+          },
+          "response": []
+        },
+        {
+          "name": "Filtrar por fecha 2026-11-12",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Todas las reservas son del 2026-11-12', function () {",
+                  "  const { reservas } = pm.response.json();",
+                  "  pm.expect(reservas.length).to.be.above(0);",
+                  "  reservas.forEach((r) => pm.expect(r.fecha).to.eql('2026-11-12'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas?fecha=2026-11-12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2026-11-12"
+                }
+              ]
+            },
+            "description": "Reservas de un día: ?fecha=AAAA-MM-DD."
+          },
+          "response": []
+        },
+        {
+          "name": "Filtrar por estado pendiente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Todas las reservas están pendientes', function () {",
+                  "  const { reservas } = pm.response.json();",
+                  "  pm.expect(reservas.length).to.be.above(0);",
+                  "  reservas.forEach((r) => pm.expect(r.estado).to.eql('pendiente'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas?estado=pendiente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "pendiente"
+                }
+              ]
+            },
+            "description": "Reservas por estado: ?estado=pendiente|confirmada|en-espera|cancelada."
+          },
+          "response": []
+        },
+        {
+          "name": "Comprobar disponibilidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('La mesa T-01 está disponible de 13:00 a 14:30', function () {",
+                  "  const datos = pm.response.json();",
+                  "  pm.expect(datos.disponible).to.eql(true);",
+                  "  pm.expect(datos.mensaje).to.include('13:00 y 14:30');",
+                  "  pm.expect(datos.conflicto).to.eql(null);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/disponibilidad?fecha=2026-11-20&inicio=13:00&duracion=90&mesa=T-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "disponibilidad"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2026-11-20"
+                },
+                {
+                  "key": "inicio",
+                  "value": "13:00"
+                },
+                {
+                  "key": "duracion",
+                  "value": "90"
+                },
+                {
+                  "key": "mesa",
+                  "value": "T-01"
+                }
+              ]
+            },
+            "description": "Igual que el botón \"Comprobar disponibilidad\" del modal: mesa T-01, 2026-11-20, 13:00, 90 minutos."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const { reserva } = pm.response.json();",
+                  "pm.environment.set('reservaId', reserva._id);",
+                  "",
+                  "pm.test('Calcula fin = 14:30 y estado confirmada', function () {",
+                  "  pm.expect(reserva.fin).to.eql('14:30');",
+                  "  pm.expect(reserva.estado).to.eql('confirmada');",
+                  "  pm.expect(reserva.mesa).to.eql('T-01');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteRut\": \"12.345.678-9\",\n  \"cliente\": \"Juan Pérez\",\n  \"telefono\": \"+56 9 1234 5678\",\n  \"personas\": 4,\n  \"fecha\": \"2026-11-20\",\n  \"inicio\": \"13:00\",\n  \"duracion\": 90,\n  \"mesa\": \"T-01\",\n  \"observaciones\": \"Mesa junto a la ventana\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "Crea una reserva con duracion en minutos (el backend calcula fin). Guarda el _id en la variable reservaId."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener reserva por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Es la reserva creada', function () {",
+                  "  const reserva = pm.response.json();",
+                  "  pm.expect(reserva._id).to.eql(pm.environment.get('reservaId'));",
+                  "  pm.expect(reserva.cliente).to.eql('Juan Pérez');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{reservaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{reservaId}}"
+              ]
+            },
+            "description": "Obtiene la reserva recién creada usando {{reservaId}}."
+          },
+          "response": []
+        },
+        {
+          "name": "Editar reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Actualiza inicio, fin y personas', function () {",
+                  "  const { reserva } = pm.response.json();",
+                  "  pm.expect(reserva.inicio).to.eql('14:00');",
+                  "  pm.expect(reserva.fin).to.eql('15:00');",
+                  "  pm.expect(reserva.personas).to.eql(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inicio\": \"14:00\",\n  \"duracion\": 60,\n  \"personas\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{reservaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{reservaId}}"
+              ]
+            },
+            "description": "Edita solo los campos enviados: inicio 14:00, 60 minutos, 3 personas → fin 15:00."
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar estado a en-espera",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('El estado es en-espera', function () {",
+                  "  pm.expect(pm.response.json().reserva.estado).to.eql('en-espera');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"en-espera\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{reservaId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{reservaId}}",
+                "estado"
+              ]
+            },
+            "description": "Cambia solo el estado de la reserva."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Confirma la eliminación', function () {",
+                  "  pm.expect(pm.response.json().mensaje).to.eql('Reserva eliminada correctamente');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{reservaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{reservaId}}"
+              ]
+            },
+            "description": "Elimina la reserva creada."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener reserva eliminada (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Mensaje de reserva no encontrada', function () {",
+                  "  pm.expect(pm.response.json().mensaje).to.eql('Reserva no encontrada');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{reservaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{reservaId}}"
+              ]
+            },
+            "description": "La reserva eliminada ya no existe."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Validaciones",
+      "description": "Errores esperados: 400, 404 y 409.",
+      "item": [
+        {
+          "name": "Datos inválidos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Devuelve la lista de errores', function () {",
+                  "  const datos = pm.response.json();",
+                  "  pm.expect(datos.mensaje).to.eql('Datos de la reserva no válidos');",
+                  "  pm.expect(datos.errores).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteRut\": \"12345678\",\n  \"cliente\": \"J\",\n  \"telefono\": \"+56 9 1234 5678\",\n  \"personas\": 0,\n  \"fecha\": \"2026-02-30\",\n  \"inicio\": \"13:00\",\n  \"fin\": \"12:00\",\n  \"mesa\": \"T-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "RUT mal formado, nombre corto, 0 personas, fecha inexistente y fin antes que inicio."
+          },
+          "response": []
+        },
+        {
+          "name": "Horario no permitido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Informa los horarios permitidos', function () {",
+                  "  const datos = pm.response.json();",
+                  "  pm.expect(datos.mensaje).to.include('17:00');",
+                  "  pm.expect(datos.horariosPermitidos).to.include('13:00');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteRut\": \"12.345.678-9\",\n  \"cliente\": \"Juan Pérez\",\n  \"telefono\": \"+56 9 1234 5678\",\n  \"personas\": 2,\n  \"fecha\": \"2026-11-20\",\n  \"inicio\": \"17:00\",\n  \"duracion\": 60,\n  \"mesa\": \"T-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "Las 17:00 no están en los horarios del restaurante."
+          },
+          "response": []
+        },
+        {
+          "name": "Más personas que capacidad (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Informa la capacidad de la mesa', function () {",
+                  "  pm.expect(pm.response.json().mensaje).to.include('capacidad para 2 personas');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteRut\": \"19.876.543-2\",\n  \"cliente\": \"María González\",\n  \"telefono\": \"+56 9 8765 4321\",\n  \"personas\": 5,\n  \"fecha\": \"2026-11-20\",\n  \"inicio\": \"13:00\",\n  \"duracion\": 60,\n  \"mesa\": \"T-02\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "La mesa T-02 tiene capacidad para 2 personas."
+          },
+          "response": []
+        },
+        {
+          "name": "Mesa inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Indica que la mesa no existe', function () {",
+                  "  pm.expect(pm.response.json().mensaje).to.eql('La mesa Z-99 no existe');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteRut\": \"15.444.333-K\",\n  \"cliente\": \"Carlos Soto\",\n  \"telefono\": \"+56 9 5555 4444\",\n  \"personas\": 2,\n  \"fecha\": \"2026-11-20\",\n  \"inicio\": \"13:00\",\n  \"duracion\": 60,\n  \"mesa\": \"Z-99\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "La mesa Z-99 no existe en la colección mesas."
+          },
+          "response": []
+        },
+        {
+          "name": "Mesa ocupada (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Indica con qué reserva choca', function () {",
+                  "  const datos = pm.response.json();",
+                  "  pm.expect(datos.conflicto.cliente).to.eql('María González');",
+                  "  pm.expect(datos.conflicto.inicio).to.eql('19:30');",
+                  "  pm.expect(datos.conflicto.fin).to.eql('21:30');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteRut\": \"11.222.333-4\",\n  \"cliente\": \"Luis Ramírez\",\n  \"telefono\": \"+56 9 9999 8888\",\n  \"personas\": 4,\n  \"fecha\": \"2026-11-12\",\n  \"inicio\": \"20:00\",\n  \"duracion\": 60,\n  \"mesa\": \"M-09\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "M-09 ya está reservada el 2026-11-12 de 19:30 a 21:30 por María González (dato del seed)."
+          },
+          "response": []
+        },
+        {
+          "name": "Id inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Mensaje de reserva no encontrada', function () {",
+                  "  pm.expect(pm.response.json().mensaje).to.eql('Reserva no encontrada');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/000000000000000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "000000000000000000000000"
+              ]
+            },
+            "description": "Id con formato válido que no existe en la base de datos."
+          },
+          "response": []
+        },
+        {
+          "name": "Id mal formado (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Mensaje de formato de id no válido', function () {",
+                  "  pm.expect(pm.response.json().mensaje).to.eql('Formato de ID de reserva no válido');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/abc123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "abc123"
+              ]
+            },
+            "description": "El id no es un ObjectId de MongoDB (24 caracteres hexadecimales)."
+          },
+          "response": []
+        },
+        {
+          "name": "Estado inválido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Informa los estados permitidos', function () {",
+                  "  const datos = pm.response.json();",
+                  "  pm.expect(datos.mensaje).to.eql('Estado de reserva no válido');",
+                  "  pm.expect(datos.estadosPermitidos).to.have.members(['pendiente', 'confirmada', 'en-espera', 'cancelada']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"terminada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/000000000000000000000000/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "000000000000000000000000",
+                "estado"
+              ]
+            },
+            "description": "El estado debe ser pendiente, confirmada, en-espera o cancelada."
+          },
+          "response": []
+        },
+        {
+          "name": "Ruta inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ruta-inexistente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ruta-inexistente"
+              ]
+            },
+            "description": "Una ruta que no existe en la API."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
