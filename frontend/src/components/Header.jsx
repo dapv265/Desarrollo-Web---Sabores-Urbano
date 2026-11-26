@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { ROLES } from "../auth/roles";
+import { ROLES, ROLES_REPORTES, ROLES_RESTAURANTES } from "../auth/roles";
 
 // Ajusta estas rutas a las que definan en App.jsx (deben coincidir con <Route path="...">)
 const NAV_LINKS = [
@@ -28,6 +28,12 @@ export default function Header() {
       return false;
     }
     if (usuario?.rol === ROLES.COCINA && link.to === "/clientes") {
+      return false;
+    }
+    if (usuario && link.to === "/restaurantes" && !ROLES_RESTAURANTES.includes(usuario.rol)) {
+      return false;
+    }
+    if (usuario && link.to === "/reportes" && !ROLES_REPORTES.includes(usuario.rol)) {
       return false;
     }
     return true;

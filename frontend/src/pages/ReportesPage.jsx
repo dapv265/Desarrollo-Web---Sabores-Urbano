@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
+import { ROLES } from '../auth/roles';
 import { obtenerRestaurantes } from '../services/restaurantesService';
 import { obtenerResumenReportes } from '../services/reportesService';
 
@@ -32,10 +33,21 @@ function formatearError(error) {
 export default function ReportesPage() {
   const { session } = useAuth();
   const token = session?.token;
+  const usuario = session?.usuario;
+  const esAdminLocal =
+    usuario?.rol === ROLES.ADMIN_LOCAL && Boolean(usuario?.restaurante);
 
   const [periodo, setPeriodo] = useState('2026-10');
-  const [restauranteFiltro, setRestauranteFiltro] = useState('Todos');
+  const [restauranteFiltro, setRestauranteFiltro] = useState(
+    esAdminLocal ? String(usuario.restaurante) : 'Todos',
+  );
   const [restaurantes, setRestaurantes] = useState([]);
+
+  useEffect(() => {
+    if (esAdminLocal) {
+      setRestauranteFiltro(String(usuario.restaurante));
+    }
+  }, [esAdminLocal, usuario?.restaurante]);
   const [resumen, setResumen] = useState({
     periodo: '2026-10',
     kpis: {
@@ -112,10 +124,13 @@ export default function ReportesPage() {
           <select
             aria-label="Filtrar por restaurante"
             value={restauranteFiltro}
+            disabled={esAdminLocal}
             onChange={(e) => setRestauranteFiltro(e.target.value)}
-            className="p-2 border border-gray-300 rounded-lg text-sm bg-white font-semibold text-[#123C39]"
+            className="p-2 border border-gray-300 rounded-lg text-sm bg-white font-semibold text-[#123C39] disabled:opacity-70"
           >
-            <option value="Todos">Todos los restaurantes</option>
+            {!esAdminLocal && (
+              <option value="Todos">Todos los restaurantes</option>
+            )}
             {restaurantes.map((local) => (
               <option key={local._id || local.id} value={local._id || local.id}>
                 {local.codigo} - {local.nombre}

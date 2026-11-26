@@ -21,8 +21,7 @@ const LoginPage = () => {
 
     const rol = session.usuario.rol;
     const requested = location.state?.from;
-    const canVisitRequested =
-      puedeVisitarRuta(requested, rol);
+    const canVisitRequested = puedeVisitarRuta(requested, rol);
     const destination = canVisitRequested ? requested : obtenerRutaInicial(rol);
 
     if (destination) {
@@ -41,8 +40,7 @@ const LoginPage = () => {
       const result = await iniciarSesion({ email: email.trim(), password });
       const rol = result.usuario?.rol;
       const requested = location.state?.from;
-      const canVisitRequested =
-        puedeVisitarRuta(requested, rol);
+      const canVisitRequested = puedeVisitarRuta(requested, rol);
       const destination = canVisitRequested
         ? requested
         : obtenerRutaInicial(rol);
