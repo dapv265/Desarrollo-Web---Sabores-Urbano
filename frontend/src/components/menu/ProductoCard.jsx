@@ -1,43 +1,61 @@
 import { useState } from "react";
 import {
+  Ban,
   Clock,
-  Pencil,
   Eye,
-  EyeOff,
-  ImageOff,
+  Pencil,
+  Star,
+  Trash2,
 } from "lucide-react";
 
+import ImagenProducto from "./ImagenProducto";
+import { formatearPrecio } from "../../data/menuData";
+
+// Tarjeta de un producto del menú.
+// `puedeGestionar` muestra los controles de administrador.
+// `accion` es la acción en curso de ESTE producto: "disponible", "destacado" o "eliminar".
+// `conflicto` es el mensaje 409 al eliminar (producto en un pedido abierto).
 export default function ProductoCard({
   producto,
   categoria,
+  puedeGestionar,
+  accion,
+  bloqueado,
+  conflicto,
+  onVerDetalle,
   onEditar,
   onCambiarDisponibilidad,
+  onCambiarDestacado,
+  onEliminar,
+  onMarcarNoDisponible,
+  onCerrarConflicto,
 }) {
-  const [imagenConError, setImagenConError] =
+  const [confirmandoEliminar, setConfirmandoEliminar] =
     useState(false);
 
-  const mostrarImagen =
-    producto.imagen && !imagenConError;
+  // Mientras se envía cualquier acción, los controles se deshabilitan
+  const ocupado = bloqueado || Boolean(accion);
+
+  function cerrarConflicto() {
+    setConfirmandoEliminar(false);
+    onCerrarConflicto();
+  }
 
   return (
-    <article className="producto-card">
+    <article
+      className={
+        producto.disponible
+          ? "producto-card"
+          : "producto-card producto-no-disponible"
+      }
+    >
 
-      <div className="imagen-producto">
-        {mostrarImagen ? (
-          <img
-            src={producto.imagen}
-            alt={producto.nombre}
-            onError={() =>
-              setImagenConError(true)
-            }
-          />
-        ) : (
-          <div className="imagen-producto-placeholder">
-            <ImageOff />
-            <span>Foto pendiente</span>
-          </div>
-        )}
-      </div>
+      <ImagenProducto
+        imagen={producto.imagen}
+        nombre={producto.nombre}
+        categoriaId={producto.categoriaId}
+        categoria={categoria}
+      />
 
       <div className="producto-card-superior">
 
@@ -51,28 +69,39 @@ export default function ProductoCard({
           </h3>
         </div>
 
-        <span
-          className={
-            producto.disponible
-              ? "estado-producto disponible"
-              : "estado-producto no-disponible"
-          }
-        >
-          {producto.disponible
-            ? "Disponible"
-            : "No disponible"}
-        </span>
+        <div className="etiquetas-producto">
+          {producto.destacado && (
+            <span className="etiqueta-destacado" title="Producto destacado">
+              <Star aria-hidden="true" fill="currentColor" />
+              Destacado
+            </span>
+          )}
+
+          <span
+            className={
+              producto.disponible
+                ? "estado-producto disponible"
+                : "estado-producto no-disponible"
+            }
+          >
+            {producto.disponible
+              ? "Disponible"
+              : "No disponible"}
+          </span>
+        </div>
 
       </div>
 
-      <p className="descripcion-producto">
-        {producto.descripcion}
-      </p>
+      {producto.descripcion && (
+        <p className="descripcion-producto">
+          {producto.descripcion}
+        </p>
+      )}
 
       <div className="datos-producto">
 
         <strong>
-          ${producto.precio.toLocaleString("es-CO")}
+          {formatearPrecio(producto.precio)}
         </strong>
 
         <span>
@@ -82,32 +111,149 @@ export default function ProductoCard({
 
       </div>
 
-      <div className="acciones-producto">
+      {/* Controles rápidos del administrador */}
+      {puedeGestionar && (
+        <div className="controles-producto">
 
-        <button
-          type="button"
-          onClick={() => onEditar(producto)}
-        >
-          <Pencil />
-          Editar
-        </button>
+          <label
+            className={
+              ocupado
+                ? "interruptor-producto deshabilitado"
+                : "interruptor-producto"
+            }
+          >
+            <input
+              type="checkbox"
+              checked={producto.disponible}
+              disabled={ocupado}
+              onChange={() => onCambiarDisponibilidad(producto)}
+            />
+            <span />
+            {accion === "disponible" ? "Guardando..." : "Disponible"}
+          </label>
 
-        <button
-          type="button"
-          onClick={() =>
-            onCambiarDisponibilidad(producto.id)
-          }
-        >
-          {producto.disponible
-            ? <EyeOff />
-            : <Eye />}
+          <button
+            type="button"
+            className={
+              producto.destacado
+                ? "boton-destacado activo"
+                : "boton-destacado"
+            }
+            aria-pressed={producto.destacado}
+            disabled={ocupado}
+            onClick={() => onCambiarDestacado(producto)}
+            title={producto.destacado ? "Quitar de destacados" : "Marcar como destacado"}
+          >
+            <Star
+              aria-hidden="true"
+              fill={producto.destacado ? "currentColor" : "none"}
+            />
+            {accion === "destacado"
+              ? "Guardando..."
+              : producto.destacado ? "Destacado" : "Destacar"}
+          </button>
 
-          {producto.disponible
-            ? "Deshabilitar"
-            : "Habilitar"}
-        </button>
+        </div>
+      )}
 
-      </div>
+      {/* Eliminar: 409 por pedido abierto, confirmación o botones normales */}
+      {puedeGestionar && conflicto ? (
+
+        <div className="aviso-conflicto-producto" role="alert">
+          <p>{conflicto}</p>
+
+          <div className="botones-confirmacion-producto">
+            <button
+              type="button"
+              className="boton-secundario-producto"
+              onClick={cerrarConflicto}
+              disabled={ocupado}
+            >
+              Cerrar
+            </button>
+
+            {producto.disponible && (
+              <button
+                type="button"
+                className="boton-peligro-producto"
+                onClick={() => onMarcarNoDisponible(producto)}
+                disabled={ocupado}
+              >
+                <Ban />
+                {accion === "disponible" ? "Guardando..." : "Marcar como no disponible"}
+              </button>
+            )}
+          </div>
+        </div>
+
+      ) : puedeGestionar && confirmandoEliminar ? (
+
+        <div className="confirmar-eliminar-producto" role="alertdialog" aria-label={`Eliminar ${producto.nombre}`}>
+          <p>¿Eliminar "{producto.nombre}"?</p>
+
+          <div className="botones-confirmacion-producto">
+            <button
+              type="button"
+              className="boton-secundario-producto"
+              onClick={() => setConfirmandoEliminar(false)}
+              disabled={ocupado}
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              className="boton-peligro-producto"
+              onClick={() => onEliminar(producto)}
+              disabled={ocupado}
+            >
+              <Trash2 />
+              {accion === "eliminar" ? "Eliminando..." : "Eliminar"}
+            </button>
+          </div>
+        </div>
+
+      ) : (
+
+        <div className={puedeGestionar ? "botones-producto" : "botones-producto solo-lectura"}>
+
+          <button
+            type="button"
+            className="boton-ver-producto"
+            onClick={() => onVerDetalle(producto)}
+          >
+            <Eye />
+            Ver detalle
+          </button>
+
+          {puedeGestionar && (
+            <>
+              <button
+                type="button"
+                className="boton-editar-producto"
+                onClick={() => onEditar(producto)}
+                disabled={ocupado}
+              >
+                <Pencil />
+                Editar
+              </button>
+
+              <button
+                type="button"
+                className="boton-eliminar-producto"
+                onClick={() => setConfirmandoEliminar(true)}
+                disabled={ocupado}
+                aria-label={`Eliminar ${producto.nombre}`}
+              >
+                <Trash2 />
+                Eliminar
+              </button>
+            </>
+          )}
+
+        </div>
+
+      )}
 
     </article>
   );

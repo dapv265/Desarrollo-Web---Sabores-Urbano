@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import {
+  CircleAlert,
   Clock,
+  DollarSign,
   Image,
-  ImageOff,
+  MessageSquareText,
+  Plus,
   Save,
   Sparkles,
   Tag,
@@ -10,115 +13,157 @@ import {
   X,
 } from "lucide-react";
 
+import ImagenProducto from "./ImagenProducto";
+import { LIMITES_PRODUCTO, formatearPrecio } from "../../data/menuData";
+
+// true si el texto es un número entero (ej. "18000")
+const esEntero = (valor) =>
+  String(valor).trim() !== "" && Number.isInteger(Number(valor));
+
+// Mismas reglas que valida el backend
+function validarFormulario(formulario, categorias) {
+  const errores = [];
+  const nombre = formulario.nombre.trim();
+  const { nombreMin, nombreMax, descripcionMax, tiempoMin, tiempoMax } = LIMITES_PRODUCTO;
+
+  if (nombre.length < nombreMin || nombre.length > nombreMax) {
+    errores.push(`El nombre debe tener entre ${nombreMin} y ${nombreMax} caracteres.`);
+  }
+
+  if (formulario.descripcion.trim().length > descripcionMax) {
+    errores.push(`La descripción no puede superar los ${descripcionMax} caracteres.`);
+  }
+
+  if (!esEntero(formulario.precio) || Number(formulario.precio) <= 0) {
+    errores.push("El precio debe ser un número entero mayor a 0 (CLP).");
+  }
+
+  if (!categorias.some((categoria) => String(categoria.id) === String(formulario.categoriaId))) {
+    errores.push("Seleccione una categoría de la lista.");
+  }
+
+  const tiempo = Number(formulario.tiempoPreparacion);
+
+  if (!esEntero(formulario.tiempoPreparacion) || tiempo < tiempoMin || tiempo > tiempoMax) {
+    errores.push(`El tiempo de preparación debe ser un entero entre ${tiempoMin} y ${tiempoMax} minutos.`);
+  }
+
+  return errores;
+}
+
+// Modal para crear (sin `producto`) o editar un producto.
+// Se monta al abrirse: los valores iniciales se leen una sola vez.
+// `onGuardar(datos)` debe lanzar el error del backend para mostrarlo aquí.
 export default function ModalEditarProducto({
-  abierto,
   producto,
   categorias,
   onCerrar,
   onGuardar,
 }) {
-  const [formulario, setFormulario] = useState({
-    nombre: "",
-    descripcion: "",
-    precio: "",
-    categoriaId: "",
-    imagen: "",
-    tiempoPreparacion: "",
-    disponible: true,
-    destacado: false,
-  });
+  const esEdicion = Boolean(producto);
 
-  const [imagenConError, setImagenConError] =
-    useState(false);
+  const [formulario, setFormulario] = useState(() => ({
+    nombre: producto?.nombre ?? "",
+    descripcion: producto?.descripcion ?? "",
+    precio: producto ? String(producto.precio) : "",
+    categoriaId: producto ? String(producto.categoriaId) : "",
+    imagen: producto?.imagen ?? "",
+    tiempoPreparacion: String(producto?.tiempoPreparacion ?? 10),
+    disponible: producto?.disponible ?? true,
+    destacado: Boolean(producto?.destacado),
+    motivo: "",
+  }));
 
+  // { mensaje, errores[] } a mostrar dentro del modal
+  const [problemas, setProblemas] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+
+  // Cerrar con Escape (salvo mientras se guarda)
   useEffect(() => {
-    if (!producto) {
-      return;
+    function manejarTecla(evento) {
+      if (evento.key === "Escape" && !guardando) onCerrar();
     }
 
-    setFormulario({
-      nombre: producto.nombre,
-      descripcion: producto.descripcion,
-      precio: producto.precio,
-      categoriaId: producto.categoriaId,
-      imagen: producto.imagen || "",
-      tiempoPreparacion: producto.tiempoPreparacion,
-      disponible: producto.disponible,
-      destacado: Boolean(producto.destacado),
-    });
+    window.addEventListener("keydown", manejarTecla);
+    return () => window.removeEventListener("keydown", manejarTecla);
+  }, [guardando, onCerrar]);
 
-    setImagenConError(false);
-  }, [producto]);
-
-  if (!abierto || !producto) {
-    return null;
-  }
+  const cambioPrecio =
+    esEdicion && esEntero(formulario.precio) && Number(formulario.precio) !== producto.precio;
 
   function actualizarCampo(campo, valor) {
-    setFormulario((actual) => ({
-      ...actual,
-      [campo]: valor,
-    }));
-
-    if (campo === "imagen") {
-      setImagenConError(false);
-    }
+    setFormulario((actual) => ({ ...actual, [campo]: valor }));
   }
 
-  function manejarSubmit(evento) {
+  async function manejarSubmit(evento) {
     evento.preventDefault();
 
-    const precio = Number(formulario.precio);
-    const tiempoPreparacion =
-      Number(formulario.tiempoPreparacion);
+    const errores = validarFormulario(formulario, categorias);
 
-    if (
-      !formulario.nombre.trim() ||
-      !formulario.descripcion.trim() ||
-      !precio ||
-      precio <= 0 ||
-      !tiempoPreparacion ||
-      tiempoPreparacion <= 0
-    ) {
+    if (errores.length > 0) {
+      setProblemas({ mensaje: "Revisa los datos del producto:", errores });
       return;
     }
 
-    onGuardar({
-      ...producto,
+    const datos = {
       nombre: formulario.nombre.trim(),
       descripcion: formulario.descripcion.trim(),
-      precio,
+      precio: Number(formulario.precio),
       categoriaId: Number(formulario.categoriaId),
       imagen: formulario.imagen.trim(),
-      tiempoPreparacion,
+      tiempoPreparacion: Number(formulario.tiempoPreparacion),
       disponible: formulario.disponible,
       destacado: formulario.destacado,
-    });
-  }
+    };
 
-  const mostrarImagen =
-    formulario.imagen && !imagenConError;
+    // El PUT registra el cambio de precio en el historial con este motivo
+    if (cambioPrecio) {
+      datos.motivo = formulario.motivo.trim() || "Editado desde Menú";
+    }
+
+    setGuardando(true);
+    setProblemas(null);
+
+    try {
+      // Si sale bien, el padre cierra (desmonta) el modal
+      await onGuardar(datos);
+    } catch (error) {
+      setProblemas({
+        mensaje: error.message,
+        errores: error.errores ?? [],
+      });
+      setGuardando(false);
+    }
+  }
 
   return (
     <div
       className="fondo-modal-menu"
       onClick={(evento) => {
-        if (evento.target === evento.currentTarget) {
+        if (evento.target === evento.currentTarget && !guardando) {
           onCerrar();
         }
       }}
     >
-      <section className="modal-editar-producto">
+      <section
+        className="modal-editar-producto"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tituloModalProducto"
+      >
         <div className="encabezado-modal-producto">
           <div>
-            <span>EDITAR PRODUCTO</span>
-            <h2>{producto.nombre}</h2>
+            <span>{esEdicion ? "EDITAR PRODUCTO" : "NUEVO PRODUCTO"}</span>
+            <h2 id="tituloModalProducto">
+              {esEdicion ? producto.nombre : "Agregar al menú"}
+            </h2>
           </div>
 
           <button
             type="button"
             className="boton-cerrar-modal"
             onClick={onCerrar}
+            disabled={guardando}
             aria-label="Cerrar modal"
           >
             <X />
@@ -128,81 +173,62 @@ export default function ModalEditarProducto({
         <form
           className="formulario-editar-producto"
           onSubmit={manejarSubmit}
+          noValidate
         >
-          <div className="preview-producto-modal">
-            {mostrarImagen ? (
-              <img
-                src={formulario.imagen}
-                alt={formulario.nombre}
-                onError={() => setImagenConError(true)}
-              />
-            ) : (
-              <div className="preview-producto-placeholder">
-                <ImageOff />
-                <span>Foto pendiente</span>
-              </div>
-            )}
-          </div>
+          <ImagenProducto
+            className="preview-producto-modal"
+            imagen={formulario.imagen.trim()}
+            nombre={formulario.nombre || "Producto"}
+            categoriaId={Number(formulario.categoriaId)}
+          />
 
           <div className="campos-producto-modal">
             <div className="grupo-modal-producto campo-completo">
-              <label htmlFor="editarNombreProducto">
+              <label htmlFor="productoNombre">
                 <Type />
                 Nombre
               </label>
               <input
-                id="editarNombreProducto"
+                id="productoNombre"
                 type="text"
+                maxLength={LIMITES_PRODUCTO.nombreMax}
                 value={formulario.nombre}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "nombre",
-                    evento.target.value
-                  )
-                }
+                onChange={(evento) => actualizarCampo("nombre", evento.target.value)}
                 required
               />
             </div>
 
             <div className="grupo-modal-producto campo-completo">
-              <label htmlFor="editarDescripcionProducto">
+              <label htmlFor="productoDescripcion">
                 <Tag />
-                Descripcion
+                Descripción (opcional)
               </label>
               <textarea
-                id="editarDescripcionProducto"
+                id="productoDescripcion"
                 rows="3"
+                maxLength={LIMITES_PRODUCTO.descripcionMax}
                 value={formulario.descripcion}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "descripcion",
-                    evento.target.value
-                  )
-                }
-                required
+                onChange={(evento) => actualizarCampo("descripcion", evento.target.value)}
               />
+              <small className="contador-modal-producto">
+                {formulario.descripcion.length}/{LIMITES_PRODUCTO.descripcionMax}
+              </small>
             </div>
 
             <div className="grupo-modal-producto">
-              <label htmlFor="editarCategoriaProducto">
+              <label htmlFor="productoCategoria">
                 <Tag />
-                Categoria
+                Categoría
               </label>
               <select
-                id="editarCategoriaProducto"
+                id="productoCategoria"
                 value={formulario.categoriaId}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "categoriaId",
-                    evento.target.value
-                  )
-                }
+                onChange={(evento) => actualizarCampo("categoriaId", evento.target.value)}
+                required
               >
+                <option value="">Seleccione categoría</option>
                 {categorias.map((categoria) => (
-                  <option
-                    key={categoria.id}
-                    value={categoria.id}
-                  >
+                  <option key={categoria.id} value={categoria.id}>
                     {categoria.nombre}
                   </option>
                 ))}
@@ -210,61 +236,72 @@ export default function ModalEditarProducto({
             </div>
 
             <div className="grupo-modal-producto">
-              <label htmlFor="editarPrecioProducto">
-                <Tag />
-                Precio
+              <label htmlFor="productoPrecio">
+                <DollarSign />
+                Precio (CLP)
               </label>
               <input
-                id="editarPrecioProducto"
+                id="productoPrecio"
                 type="number"
                 min="1"
+                step="1"
+                inputMode="numeric"
                 value={formulario.precio}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "precio",
-                    evento.target.value
-                  )
-                }
+                onChange={(evento) => actualizarCampo("precio", evento.target.value)}
                 required
               />
             </div>
 
+            {/* Si cambia el precio, se pide un motivo para el historial */}
+            {cambioPrecio && (
+              <div className="grupo-modal-producto campo-completo">
+                <label htmlFor="productoMotivo">
+                  <MessageSquareText />
+                  Motivo del cambio de precio (opcional)
+                </label>
+                <input
+                  id="productoMotivo"
+                  type="text"
+                  maxLength={LIMITES_PRODUCTO.motivoMax}
+                  placeholder="Ej: alza de costos"
+                  value={formulario.motivo}
+                  onChange={(evento) => actualizarCampo("motivo", evento.target.value)}
+                />
+                <small className="contador-modal-producto">
+                  {formatearPrecio(producto.precio)} → {formatearPrecio(formulario.precio)} quedará en el historial
+                </small>
+              </div>
+            )}
+
             <div className="grupo-modal-producto">
-              <label htmlFor="editarTiempoProducto">
+              <label htmlFor="productoTiempo">
                 <Clock />
-                Tiempo
+                Tiempo (minutos)
               </label>
               <input
-                id="editarTiempoProducto"
+                id="productoTiempo"
                 type="number"
-                min="1"
+                min={LIMITES_PRODUCTO.tiempoMin}
+                max={LIMITES_PRODUCTO.tiempoMax}
+                step="1"
+                inputMode="numeric"
                 value={formulario.tiempoPreparacion}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "tiempoPreparacion",
-                    evento.target.value
-                  )
-                }
+                onChange={(evento) => actualizarCampo("tiempoPreparacion", evento.target.value)}
                 required
               />
             </div>
 
             <div className="grupo-modal-producto">
-              <label htmlFor="editarImagenProducto">
+              <label htmlFor="productoImagen">
                 <Image />
-                Imagen
+                Imagen (opcional)
               </label>
               <input
-                id="editarImagenProducto"
+                id="productoImagen"
                 type="text"
                 value={formulario.imagen}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "imagen",
-                    evento.target.value
-                  )
-                }
-                placeholder="/images/menu/plato.jpg"
+                onChange={(evento) => actualizarCampo("imagen", evento.target.value)}
+                placeholder="/images/plato.jpg"
               />
             </div>
 
@@ -272,12 +309,7 @@ export default function ModalEditarProducto({
               <input
                 type="checkbox"
                 checked={formulario.disponible}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "disponible",
-                    evento.target.checked
-                  )
-                }
+                onChange={(evento) => actualizarCampo("disponible", evento.target.checked)}
               />
               <span />
               Disponible
@@ -287,23 +319,36 @@ export default function ModalEditarProducto({
               <input
                 type="checkbox"
                 checked={formulario.destacado}
-                onChange={(evento) =>
-                  actualizarCampo(
-                    "destacado",
-                    evento.target.checked
-                  )
-                }
+                onChange={(evento) => actualizarCampo("destacado", evento.target.checked)}
               />
               <span />
               <Sparkles />
               Destacado
             </label>
+
+            {/* Errores del frontend o del backend (400, 409 nombre repetido, 401...) */}
+            {problemas && (
+              <div className="errores-modal-producto campo-completo" role="alert">
+                <CircleAlert aria-hidden="true" />
+                <div>
+                  <strong>{problemas.mensaje}</strong>
+                  {problemas.errores.length > 0 && (
+                    <ul>
+                      {problemas.errores.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="acciones-modal-producto">
             <button
               type="button"
               onClick={onCerrar}
+              disabled={guardando}
             >
               Cancelar
             </button>
@@ -311,9 +356,12 @@ export default function ModalEditarProducto({
             <button
               type="submit"
               className="boton-guardar-producto"
+              disabled={guardando}
             >
-              <Save />
-              Guardar cambios
+              {esEdicion ? <Save /> : <Plus />}
+              {guardando
+                ? "Guardando..."
+                : esEdicion ? "Guardar cambios" : "Crear producto"}
             </button>
           </div>
         </form>

@@ -1,18 +1,14 @@
 import dotenv from 'dotenv';
 import { connectDB, disconnectDB } from '../config/db.js';
 import { Producto } from '../models/Producto.js';
+import { CATEGORIAS_MENU } from '../constants/categorias.js';
 import { esEjecucionDirecta } from './esEjecucionDirecta.js';
 
 dotenv.config();
 
-// Mismas categorías y productos que tenía frontend/src/data/menuData.js
-export const categoriasIniciales = [
-  { id: 1, nombre: 'Entradas' },
-  { id: 2, nombre: 'Platos principales' },
-  { id: 3, nombre: 'Bebidas' },
-  { id: 4, nombre: 'Postres' },
-  { id: 5, nombre: 'Ensaladas' }
-];
+// Mismas categorías y productos que tenía frontend/src/data/menuData.js.
+// Las categorías viven en constants/categorias.js; se reexportan por compatibilidad.
+export const categoriasIniciales = CATEGORIAS_MENU;
 
 export const productosIniciales = [
   { id: 1, nombre: 'Hamburguesa Especial', descripcion: 'Hamburguesa artesanal con carne, queso y vegetales.', precio: 18000, categoriaId: 2, imagen: '/images/hamburguesa-especial.jpg', tiempoPreparacion: 20, disponible: true, destacado: true },
