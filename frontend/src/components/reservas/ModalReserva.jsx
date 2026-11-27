@@ -51,6 +51,7 @@ const TEXTO_ESTADO_MESA = {
 // `valoresIniciales` = { fecha, hora, mesa } para una reserva nueva.
 export default function ModalReserva({
   mesas,
+  clientes = [],
   horarios,
   reservaEditar,
   valoresIniciales,
@@ -60,10 +61,19 @@ export default function ModalReserva({
   const esEdicion = Boolean(reservaEditar);
   const base = reservaEditar ?? {};
 
+  const clienteCoincidenteInicial = clientes.find(
+    (c) =>
+      (base.clienteId != null && String(c.id) === String(base.clienteId)) ||
+      (base.clienteRut && c.rut?.toUpperCase() === base.clienteRut.toUpperCase())
+  );
+
   const duracionInicial = esEdicion
     ? String(calcularDuracion(base.inicio, base.fin))
     : "60";
 
+  const [clienteId, setClienteId] = useState(
+    clienteCoincidenteInicial ? String(clienteCoincidenteInicial.id) : ""
+  );
   const [cliente, setCliente] = useState(base.cliente ?? "");
   const [clienteRut, setClienteRut] = useState(base.clienteRut ?? "");
   const [telefono, setTelefono] = useState(base.telefono ?? "");
@@ -110,6 +120,21 @@ export default function ModalReserva({
   const estadoMesaAhora = TEXTO_ESTADO_MESA[mesaElegida?.estado];
 
   const enviando = comprobando || guardando;
+
+  function seleccionarClienteRegistrado(idSeleccionado) {
+    setClienteId(idSeleccionado);
+
+    if (!idSeleccionado) {
+      return;
+    }
+
+    const encontrado = clientes.find((c) => String(c.id) === String(idSeleccionado));
+    if (encontrado) {
+      setCliente(encontrado.nombre || "");
+      setClienteRut(encontrado.rut || "");
+      setTelefono(encontrado.telefono || "");
+    }
+  }
 
   // Cambia un campo y borra el resultado anterior de disponibilidad
   function cambiarCampo(setter) {
@@ -218,6 +243,7 @@ export default function ModalReserva({
     }
 
     const datosReserva = {
+      ...(clienteId ? { clienteId: Number(clienteId) } : {}),
       clienteRut: clienteRut.trim().toUpperCase(),
       cliente: cliente.trim(),
       telefono: telefono.trim(),
@@ -302,6 +328,32 @@ export default function ModalReserva({
           className="formulario-reserva"
           onSubmit={manejarSubmit}
         >
+
+          {clientes.length > 0 && (
+            <div className="grupo-formulario campo-completo">
+              <label htmlFor="clienteRegistrado">
+                <UsersRound />
+                Cliente registrado (opcional)
+              </label>
+
+              <select
+                id="clienteRegistrado"
+                value={clienteId}
+                onChange={(evento) =>
+                  seleccionarClienteRegistrado(evento.target.value)
+                }
+              >
+                <option value="">Ingreso manual / otro cliente</option>
+                {clientes
+                  .filter((c) => c.activo !== false && c.estado !== "Inactivo")
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre} — {c.rut} ({c.telefono})
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
 
           <div className="grupo-formulario campo-completo">
 

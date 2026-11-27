@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { matchedData } from 'express-validator';
 
 import { getJwtConfig } from '../config/jwt.js';
@@ -96,5 +97,60 @@ export function perfil(req, res) {
   return res.status(200).json({
     success: true,
     data: { usuario: usuarioPublico(req.user) },
+  });
+}
+
+export async function listarUsuarios(_req, res) {
+  const usuarios = await Usuario.find({})
+    .populate('restaurante', 'codigo nombre estado')
+    .sort({ createdAt: -1 });
+
+  return res.status(200).json({
+    success: true,
+    data: { usuarios: usuarios.map(usuarioPublico) },
+  });
+}
+
+export async function cambiarEstadoUsuario(req, res) {
+  const { id } = req.params;
+  const { activo } = req.body || {};
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'El identificador de usuario no es válido.',
+    });
+  }
+
+  if (typeof activo !== 'boolean') {
+    return res.status(400).json({
+      success: false,
+      message: 'Debe indicar un estado booleano válido (activo: true o false).',
+    });
+  }
+
+  if (String(req.user._id) === String(id) && activo === false) {
+    return res.status(400).json({
+      success: false,
+      message: 'No puedes desactivar tu propia cuenta de Administrador General.',
+    });
+  }
+
+  const usuario = await Usuario.findByIdAndUpdate(
+    id,
+    { activo },
+    { new: true, runValidators: true },
+  ).populate('restaurante', 'codigo nombre estado');
+
+  if (!usuario) {
+    return res.status(404).json({
+      success: false,
+      message: 'Usuario no encontrado.',
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: { usuario: usuarioPublico(usuario) },
   });
 }

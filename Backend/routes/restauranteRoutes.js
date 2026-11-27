@@ -9,6 +9,8 @@ import {
   obtenerRestaurantePorCodigo,
   obtenerRestaurantePorId,
 } from '../controllers/restauranteController.js';
+import { ROLES } from '../constants/roles.js';
+import { authenticate, authorizeRoles } from '../middleware/authMiddleware.js';
 import {
   validarCodigoRestaurante,
   validarEstadoRestaurante,
@@ -23,6 +25,8 @@ import {
 
 const router = Router();
 
+const soloAdminGeneral = [authenticate, authorizeRoles(ROLES.ADMIN_GENERAL)];
+
 router.get('/', validarFiltroEstadoRestaurante, listarRestaurantes);
 router.get(
   '/codigo/:codigo',
@@ -32,12 +36,14 @@ router.get(
 router.get('/:id', validarIdRestaurante, obtenerRestaurantePorId);
 router.post(
   '/',
+  ...soloAdminGeneral,
   restauranteCreateValidators,
   validateRequest,
   crearRestaurante,
 );
 router.put(
   '/:id',
+  ...soloAdminGeneral,
   validarIdRestaurante,
   restauranteUpdateValidators,
   validateRequest,
@@ -45,10 +51,11 @@ router.put(
 );
 router.patch(
   '/:id/estado',
+  ...soloAdminGeneral,
   validarIdRestaurante,
   validarEstadoRestaurante,
   cambiarEstadoRestaurante,
 );
-router.delete('/:id', validarIdRestaurante, eliminarRestaurante);
+router.delete('/:id', ...soloAdminGeneral, validarIdRestaurante, eliminarRestaurante);
 
 export default router;

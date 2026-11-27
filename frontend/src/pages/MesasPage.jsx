@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/useAuth";
+import { ROLES } from "../auth/roles";
 import { ZONAS, ESTADOS } from "../data/mesasData";
 import MesaCard from "../components/MesaCard";
 import {
@@ -10,6 +12,8 @@ import {
   eliminarMesa,
 } from "../services/mesasService";
 
+const ROLES_GESTION_MESAS = [ROLES.ADMIN_GENERAL, ROLES.ADMIN_LOCAL];
+
 const formularioInicial = {
   restauranteCodigo: "",
   numero: "",
@@ -19,6 +23,10 @@ const formularioInicial = {
 };
 
 export default function MesasPage() {
+  const { session } = useAuth();
+  const token = session?.token;
+  const puedeGestionarMesas = ROLES_GESTION_MESAS.includes(session?.usuario?.rol);
+
   const [mesas, setMesas] = useState([]);
   const [restaurantes, setRestaurantes] = useState([]);
   const [errorRestaurantes, setErrorRestaurantes] = useState("");
@@ -109,7 +117,7 @@ export default function MesasPage() {
       };
 
       if (mesaEditando) {
-        const mesa = await actualizarMesa(mesaEditando, datos);
+        const mesa = await actualizarMesa(mesaEditando, datos, token);
 
         setMesas((actuales) =>
           actuales.map((m) => m.id === mesa.id ? mesa : m)
@@ -117,7 +125,7 @@ export default function MesasPage() {
 
         setMensaje("Mesa actualizada correctamente.");
       } else {
-        const mesa = await crearMesa(datos);
+        const mesa = await crearMesa(datos, token);
 
         setMesas((actuales) => [...actuales, mesa]);
 
@@ -140,7 +148,7 @@ export default function MesasPage() {
       setMensaje("");
       setActualizando(true);
 
-      const mesa = await actualizarEstadoMesa(id, nuevoEstado);
+      const mesa = await actualizarEstadoMesa(id, nuevoEstado, token);
 
       setMesas((actuales) =>
         actuales.map((m) => m.id === id ? mesa : m)
@@ -168,7 +176,7 @@ export default function MesasPage() {
       setError("");
       setMensaje("");
 
-      await eliminarMesa(mesa.id);
+      await eliminarMesa(mesa.id, token);
 
       setMesas((actuales) =>
         actuales.filter((m) => m.id !== mesa.id)
@@ -194,18 +202,22 @@ export default function MesasPage() {
           </h1>
 
           <p className="text-gray-600">
-            Administra restaurante, número, zona, capacidad y estado de cada mesa (RF3).
+            {puedeGestionarMesas
+              ? "Administra restaurante, número, zona, capacidad y estado de cada mesa (RF3)."
+              : "Consulta la ubicación, capacidad y estado actual de las mesas del salón (RF3)."}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={abrirNuevaMesa}
-          disabled={actualizando || cargando}
-          className="rounded bg-[var(--color-brand-primary)] px-4 py-2 text-white disabled:opacity-50"
-        >
-          + Nueva mesa
-        </button>
+        {puedeGestionarMesas && (
+          <button
+            type="button"
+            onClick={abrirNuevaMesa}
+            disabled={actualizando || cargando}
+            className="rounded bg-[var(--color-brand-primary)] px-4 py-2 text-white disabled:opacity-50"
+          >
+            + Nueva mesa
+          </button>
+        )}
       </div>
 
       {error && (
@@ -401,23 +413,25 @@ export default function MesasPage() {
                 : "Sin restaurante asignado"}
             </p>
 
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={() => abrirEdicion(mesa)}
-                disabled={actualizando || mostrarFormulario}
-                className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
-              >
-                Editar
-              </button>
+            {puedeGestionarMesas && (
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => abrirEdicion(mesa)}
+                  disabled={actualizando || mostrarFormulario}
+                  className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
+                >
+                  Editar
+                </button>
 
-              <button
-                onClick={() => borrarMesa(mesa)}
-                disabled={actualizando || mostrarFormulario}
-                className="flex-1 rounded border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
-              >
-                Eliminar
-              </button>
-            </div>
+                <button
+                  onClick={() => borrarMesa(mesa)}
+                  disabled={actualizando || mostrarFormulario}
+                  className="flex-1 rounded border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  Eliminar
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>

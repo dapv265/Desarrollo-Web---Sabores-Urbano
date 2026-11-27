@@ -1,16 +1,21 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { after, before, beforeEach, describe, it } from 'node:test';
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
+import { getJwtConfig } from '../config/jwt.js';
+import { ROLES } from '../constants/roles.js';
 import { Reporte } from '../models/Reporte.js';
 import { Restaurante } from '../models/Restaurante.js';
+import { Usuario } from '../models/Usuario.js';
 import { app } from '../server.js';
 
 let mongod;
 let server;
 let baseUrl;
+let adminToken;
 
 function obtenerSystemBinary() {
   const candidatos = [
@@ -27,6 +32,7 @@ async function request(path, options = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {}),
       ...(options.headers || {}),
     },
     ...options,
@@ -44,6 +50,22 @@ before(async () => {
   await mongoose.connect(mongod.getUri());
   await Restaurante.syncIndexes();
   await Reporte.syncIndexes();
+  await Usuario.syncIndexes();
+
+  const admin = await Usuario.create({
+    nombre: 'Admin Test',
+    email: 'admin.test@saboresurbanos.dev',
+    password: 'Password123!',
+    rol: ROLES.ADMIN_GENERAL,
+    restaurante: null,
+    activo: true,
+  });
+  const { secret, expiresIn } = getJwtConfig();
+  adminToken = jwt.sign(
+    { rol: admin.rol, restaurante: null },
+    secret,
+    { algorithm: 'HS256', subject: String(admin._id), expiresIn },
+  );
 
   await new Promise((resolve) => {
     server = app.listen(0, () => {

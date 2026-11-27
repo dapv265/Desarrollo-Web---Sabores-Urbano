@@ -183,7 +183,8 @@ export default function PreciosPage() {
       const actualizado = await cambiarPrecioProducto(
         producto.id,
         nuevoPrecio,
-        "Cambio desde Gestión de precios"
+        "Cambio desde Gestión de precios",
+        token
       );
 
       // Solo cambia el precio actual; los pedidos guardan su propio precio

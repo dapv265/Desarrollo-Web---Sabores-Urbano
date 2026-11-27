@@ -1,5 +1,6 @@
 
 import { Reserva, ESTADOS_RESERVA } from '../models/Reserva.js';
+import { Cliente, normalizarRut } from '../models/Cliente.js';
 import { Mesa } from '../models/Mesa.js';
 import {
   HORARIOS_PERMITIDOS,
@@ -13,6 +14,7 @@ import {
 
 // Campos que se aceptan desde el body al crear o editar
 const CAMPOS_RESERVA = [
+  'clienteId',
   'clienteRut',
   'cliente',
   'telefono',
@@ -24,6 +26,51 @@ const CAMPOS_RESERVA = [
   'observaciones',
   'estado'
 ];
+
+// Enlaza los datos de la reserva con un cliente registrado (por clienteId o RUT)
+const vincularClienteEnDatos = async (datos) => {
+  let clienteDoc = null;
+
+  if (datos.clienteId !== undefined && datos.clienteId !== null && datos.clienteId !== '') {
+    clienteDoc = await Cliente.findOne({ id: Number(datos.clienteId) });
+    if (clienteDoc) {
+      datos.clienteId = clienteDoc.id;
+      datos.clienteRut = datos.clienteRut || clienteDoc.rut;
+      datos.cliente = datos.cliente || clienteDoc.nombre;
+      datos.telefono = datos.telefono || clienteDoc.telefono;
+      return;
+    }
+    datos.clienteId = null;
+  }
+
+  if (datos.clienteRut) {
+    const rutNormalizado = normalizarRut(datos.clienteRut);
+    clienteDoc = await Cliente.findOne({ rut: rutNormalizado });
+    if (clienteDoc) {
+      datos.clienteId = clienteDoc.id;
+    }
+  }
+};
+
+// Actualiza `ultimaReserva` en el cliente vinculado si la fecha es más reciente
+const actualizarUltimaReservaCliente = async (reserva) => {
+  if (!reserva || reserva.estado === 'cancelada') return;
+
+  const filtro = reserva.clienteId
+    ? { id: reserva.clienteId }
+    : { rut: normalizarRut(reserva.clienteRut) };
+
+  const clienteDoc = await Cliente.findOne(filtro);
+  if (!clienteDoc) return;
+
+  const actual = clienteDoc.ultimaReserva;
+  const esFechaActual = /^\d{4}-\d{2}-\d{2}$/.test(actual || '');
+
+  if (!esFechaActual || reserva.fecha >= actual) {
+    clienteDoc.ultimaReserva = reserva.fecha;
+    await clienteDoc.save();
+  }
+};
 
 // Toma del body solo los campos que pertenecen a una reserva
 const tomarCamposReserva = (body) => {
@@ -356,6 +403,8 @@ export const crearReserva = async (req, res) => {
       }
     }
 
+    await vincularClienteEnDatos(datos);
+
     const reserva = new Reserva(datos);
 
     await reserva.validate();
@@ -369,6 +418,7 @@ export const crearReserva = async (req, res) => {
     }
 
     await reserva.save();
+    await actualizarUltimaReservaCliente(reserva);
 
     res.status(201).json({
       mensaje: 'Reserva creada correctamente',
@@ -409,6 +459,7 @@ export const actualizarReserva = async (req, res) => {
     const duracionAnterior =
       convertirHoraAMinutos(reserva.fin) - convertirHoraAMinutos(reserva.inicio);
 
+    await vincularClienteEnDatos(datos);
     reserva.set(datos);
 
     if (REGEX_HORA.test(reserva.inicio ?? '')) {
@@ -432,6 +483,7 @@ export const actualizarReserva = async (req, res) => {
     }
 
     await reserva.save();
+    await actualizarUltimaReservaCliente(reserva);
 
     res.status(200).json({
       mensaje: 'Reserva actualizada correctamente',
@@ -469,6 +521,7 @@ export const cambiarEstadoReserva = async (req, res) => {
     }
 
     await reserva.save();
+    await actualizarUltimaReservaCliente(reserva);
 
     res.status(200).json({
       mensaje: 'Estado de la reserva actualizado correctamente',

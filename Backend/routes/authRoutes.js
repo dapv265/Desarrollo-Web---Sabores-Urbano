@@ -1,6 +1,12 @@
 import { Router } from 'express';
 
-import { login, perfil, register } from '../controllers/authController.js';
+import {
+  cambiarEstadoUsuario,
+  listarUsuarios,
+  login,
+  perfil,
+  register,
+} from '../controllers/authController.js';
 import { ROLES } from '../constants/roles.js';
 import {
   authenticate,
@@ -24,5 +30,17 @@ router.post(
 );
 router.post('/login', loginValidators, validateRequest, login);
 router.get('/perfil', authenticate, perfil);
+router.get(
+  '/usuarios',
+  authenticate,
+  authorizeRoles(ROLES.ADMIN_GENERAL),
+  listarUsuarios,
+);
+router.patch(
+  '/usuarios/:id/estado',
+  authenticate,
+  authorizeRoles(ROLES.ADMIN_GENERAL),
+  cambiarEstadoUsuario,
+);
 
 export default router;

@@ -124,11 +124,12 @@ export function cambiarDestacado(id, destacado, token) {
   );
 }
 
-// Lo usa la página de Precios (sin token)
-export function cambiarPrecioProducto(id, precio, motivo = "") {
+// Lo usa la página de Precios (requiere rol de administrador)
+export function cambiarPrecioProducto(id, precio, motivo = "", token) {
   return requestJson(`/productos/${id}/precio`, {
     method: "PATCH",
     body: { precio, motivo },
+    token,
   });
 }
 

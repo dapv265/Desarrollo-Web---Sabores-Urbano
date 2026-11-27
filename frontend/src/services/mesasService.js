@@ -32,15 +32,20 @@ export async function obtenerRestaurantes() {
   return datos.data || [];
 }
 
+function headersConAuth(token, conJson = false) {
+  const headers = {};
+  if (conJson) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
 // Actualizar estado - RF3
-export async function actualizarEstadoMesa(id, estado) {
+export async function actualizarEstadoMesa(id, estado, token) {
   const respuesta = await fetch(
     `${API_BASE_URL}/mesas/${encodeURIComponent(id)}/estado`,
     {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headersConAuth(token, true),
       body: JSON.stringify({ estado }),
     }
   );
@@ -49,7 +54,7 @@ export async function actualizarEstadoMesa(id, estado) {
 
   if (!respuesta.ok) {
     throw new Error(
-      datos.mensaje || "No se pudo actualizar la mesa."
+      datos.mensaje || datos.message || "No se pudo actualizar la mesa."
     );
   }
 
@@ -111,12 +116,10 @@ export async function obtenerDisponibilidad(filtros = {}) {
 }
 
 // Crear mesa - RF3
-export async function crearMesa(mesa) {
+export async function crearMesa(mesa, token) {
   const respuesta = await fetch(`${API_BASE_URL}/mesas`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: headersConAuth(token, true),
     body: JSON.stringify(mesa),
   });
 
@@ -124,7 +127,7 @@ export async function crearMesa(mesa) {
 
   if (!respuesta.ok) {
     throw new Error(
-      datos.mensaje || "No se pudo crear la mesa."
+      datos.mensaje || datos.message || "No se pudo crear la mesa."
     );
   }
 
@@ -132,14 +135,12 @@ export async function crearMesa(mesa) {
 }
 
 // Editar mesa - RF3
-export async function actualizarMesa(id, mesa) {
+export async function actualizarMesa(id, mesa, token) {
   const respuesta = await fetch(
     `${API_BASE_URL}/mesas/${encodeURIComponent(id)}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headersConAuth(token, true),
       body: JSON.stringify(mesa),
     }
   );
@@ -148,7 +149,7 @@ export async function actualizarMesa(id, mesa) {
 
   if (!respuesta.ok) {
     throw new Error(
-      datos.mensaje || "No se pudo editar la mesa."
+      datos.mensaje || datos.message || "No se pudo editar la mesa."
     );
   }
 
@@ -156,11 +157,12 @@ export async function actualizarMesa(id, mesa) {
 }
 
 // Eliminar mesa - RF3
-export async function eliminarMesa(id) {
+export async function eliminarMesa(id, token) {
   const respuesta = await fetch(
     `${API_BASE_URL}/mesas/${encodeURIComponent(id)}`,
     {
       method: "DELETE",
+      headers: headersConAuth(token),
     }
   );
 
@@ -168,7 +170,7 @@ export async function eliminarMesa(id) {
 
   if (!respuesta.ok) {
     throw new Error(
-      datos.mensaje || "No se pudo eliminar la mesa."
+      datos.mensaje || datos.message || "No se pudo eliminar la mesa."
     );
   }
 

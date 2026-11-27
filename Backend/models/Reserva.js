@@ -15,6 +15,11 @@ export const ESTADOS_RESERVA = [
 ];
 
 const reservaSchema = new mongoose.Schema({
+  // Referencia opcional al campo `id` del modelo Cliente
+  clienteId: {
+    type: Number,
+    default: null
+  },
   clienteRut: {
     type: String,
     required: [true, 'El RUT del cliente es obligatorio'],

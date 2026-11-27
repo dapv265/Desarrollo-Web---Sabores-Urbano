@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/useAuth";
 import MesaCard from "../components/MesaCard";
 import { ZONAS } from "../data/mesasData";
 
@@ -38,6 +39,8 @@ const CLASE_CAMPO =
   "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm";
 
 export default function DisponibilidadPage() {
+  const { session } = useAuth();
+  const token = session?.token;
   const [mesas, setMesas] = useState([]);
   const [restaurantes, setRestaurantes] = useState([]);
   const [errorRestaurantes, setErrorRestaurantes] = useState("");
@@ -170,7 +173,7 @@ export default function DisponibilidadPage() {
     setError("");
 
     try {
-      await actualizarEstadoMesa(mesa.id, nuevoEstado);
+      await actualizarEstadoMesa(mesa.id, nuevoEstado, token);
 
       const datos = await obtenerDisponibilidad(
         filtrosAplicados

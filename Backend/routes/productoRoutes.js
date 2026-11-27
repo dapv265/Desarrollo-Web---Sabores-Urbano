@@ -33,7 +33,7 @@ router.patch('/:id/disponibilidad', ...soloAdministradores, validarIdProducto, c
 router.patch('/:id/destacado', ...soloAdministradores, validarIdProducto, cambiarDestacadoProducto);
 router.delete('/:id', ...soloAdministradores, validarIdProducto, eliminarProducto);
 
-// Cambio de precio: se mantiene sin token para no romper la página de Precios
-router.patch('/:id/precio', validarIdProducto, cambiarPrecioProducto);
+// Cambio de precio: Administrador General o de Local
+router.patch('/:id/precio', ...soloAdministradores, validarIdProducto, cambiarPrecioProducto);
 
 export default router;

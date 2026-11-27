@@ -28,6 +28,7 @@ import ModalReserva
 
 import { horarios } from "../data/reservasData";
 
+import { obtenerClientes } from "../services/clientesService";
 import { obtenerMesas } from "../services/mesasService";
 
 import {
@@ -90,6 +91,27 @@ export default function ReservasPage() {
   // Todas las mesas (incluye las "fuera", que se excluyen al mostrar)
   const [mesas, setMesas] =
     useState([]);
+
+  // Clientes registrados para vincular con las reservas
+  const [clientes, setClientes] =
+    useState([]);
+
+  useEffect(() => {
+    if (!token) return;
+    let activo = true;
+
+    obtenerClientes(token)
+      .then((lista) => {
+        if (activo) setClientes(Array.isArray(lista) ? lista : []);
+      })
+      .catch(() => {
+        if (activo) setClientes([]);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [token]);
 
   // Reservas del rango cargado. `clave` indica a qué rango corresponden
   const [datosReservas, setDatosReservas] =
@@ -655,6 +677,10 @@ export default function ReservasPage() {
 
         mesas={
           mesas
+        }
+
+        clientes={
+          clientes
         }
 
         horarios={
