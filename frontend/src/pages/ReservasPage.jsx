@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import HeaderReservas
   from "../components/reservas/HeaderReservas";
@@ -15,11 +15,20 @@ import DetalleReserva
 import ModalReserva
   from "../components/reservas/ModalReserva";
 
+import { horarios } from "../data/reservasData";
+
+import { obtenerMesas } from "../services/mesasService";
+
 import {
-  horarios,
-  mesas,
-  reservasIniciales,
-} from "../data/reservasData";
+  cambiarEstadoReserva,
+  crearReserva as crearReservaApi,
+  obtenerReservasPorFecha,
+} from "../services/reservasService";
+
+import {
+  fechaDeHoy,
+  sumarDias,
+} from "../utils/reservasUtils";
 
 import "../styles/reservas.css";
 
@@ -27,21 +36,27 @@ import "../styles/reservas.css";
 export default function ReservasPage() {
 
   // =========================================================
-  // ESTADO PRINCIPAL DE LAS RESERVAS
+  // DATOS DEL BACKEND
   // =========================================================
 
   const [reservas, setReservas] =
-    useState(reservasIniciales);
+    useState([]);
+
+  const [mesas, setMesas] =
+    useState([]);
+
+  const [error, setError] =
+    useState("");
 
 
   // =========================================================
-  // DÍA SELECCIONADO EN EL MINI CALENDARIO
+  // FECHA SELECCIONADA (AAAA-MM-DD)
   // =========================================================
 
   const [
-    diaSeleccionado,
-    setDiaSeleccionado,
-  ] = useState(16);
+    fechaSeleccionada,
+    setFechaSeleccionada,
+  ] = useState(fechaDeHoy);
 
 
   // =========================================================
@@ -77,6 +92,56 @@ export default function ReservasPage() {
 
 
   // =========================================================
+  // CARGA DE MESAS Y RESERVAS
+  // =========================================================
+
+  const cargarReservas = useCallback(async (fecha) => {
+    setReservas(await obtenerReservasPorFecha(fecha));
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerMesas()
+      .then((mesasApi) => {
+        // Las mesas fuera de servicio no se pueden reservar
+        if (activo) setMesas(mesasApi.filter((mesa) => mesa.estado !== "fuera"));
+      })
+      .catch((err) => {
+        if (activo) setError(err.message);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerReservasPorFecha(fechaSeleccionada)
+      .then((reservasApi) => {
+        if (!activo) return;
+        setReservas(reservasApi);
+        setError("");
+      })
+      .catch((err) => {
+        if (activo) setError(err.message);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [fechaSeleccionada]);
+
+
+  function seleccionarFecha(fecha) {
+    setFechaSeleccionada(fecha);
+    setReservaSeleccionada(null);
+  }
+
+
+  // =========================================================
   // FILTROS POR ESTADO
   // =========================================================
 
@@ -95,7 +160,7 @@ export default function ReservasPage() {
   // CAMBIAR UN FILTRO
   // =========================================================
 
-  function cambiarEstado(estado) {
+  function cambiarFiltroEstado(estado) {
 
     setEstados((anteriores) => ({
       ...anteriores,
@@ -147,12 +212,34 @@ export default function ReservasPage() {
   // CREAR NUEVA RESERVA
   // =========================================================
 
-  function crearReserva(nuevaReserva) {
+  // Lanza el error al modal para que lo muestre
+  async function crearReserva(nuevaReserva) {
 
-    setReservas((reservasActuales) => [
-      ...reservasActuales,
-      nuevaReserva,
-    ]);
+    await crearReservaApi(nuevaReserva);
+
+    if (nuevaReserva.fecha === fechaSeleccionada) {
+      await cargarReservas(fechaSeleccionada);
+    } else {
+      setFechaSeleccionada(nuevaReserva.fecha);
+    }
+
+  }
+
+
+  // =========================================================
+  // CONFIRMAR O CANCELAR UNA RESERVA
+  // =========================================================
+
+  async function cambiarEstado(reserva, estado) {
+
+    try {
+      const actualizada = await cambiarEstadoReserva(reserva._id, estado);
+      setReservaSeleccionada(actualizada);
+      await cargarReservas(fechaSeleccionada);
+      setError("");
+    } catch (err) {
+      setError(err.message);
+    }
 
   }
 
@@ -177,6 +264,12 @@ export default function ReservasPage() {
 
     <section className="pagina-reservas">
 
+      {error && (
+        <p className="bg-red-50 text-red-700 border-l-4 border-red-500 p-3 rounded mb-4" role="alert">
+          {error}
+        </p>
+      )}
+
       <section className="contenedor-reservas">
 
 
@@ -193,12 +286,12 @@ export default function ReservasPage() {
 
         <SidebarReservas
 
-          diaSeleccionado={
-            diaSeleccionado
+          fechaSeleccionada={
+            fechaSeleccionada
           }
 
-          onSeleccionarDia={
-            setDiaSeleccionado
+          onSeleccionarFecha={
+            seleccionarFecha
           }
 
           estados={
@@ -206,7 +299,7 @@ export default function ReservasPage() {
           }
 
           onCambiarEstado={
-            cambiarEstado
+            cambiarFiltroEstado
           }
 
           onLimpiar={
@@ -228,6 +321,14 @@ export default function ReservasPage() {
 
           horarios={
             horarios
+          }
+
+          fecha={
+            fechaSeleccionada
+          }
+
+          onCambiarDia={(dias) =>
+            seleccionarFecha(sumarDias(fechaSeleccionada, dias))
           }
 
           reservas={
@@ -267,6 +368,10 @@ export default function ReservasPage() {
             setReservaSeleccionada(null)
           }
 
+          onCambiarEstado={
+            cambiarEstado
+          }
+
         />
 
 
@@ -277,14 +382,24 @@ export default function ReservasPage() {
           MODAL PARA CREAR UNA NUEVA RESERVA
       ===================================================== */}
 
+      {/* Se monta al abrirse para que parta con la fecha que se está viendo */}
+      {modalAbierto && (
       <ModalReserva
 
         abierto={
           modalAbierto
         }
 
-        reservas={
-          reservas
+        mesas={
+          mesas
+        }
+
+        horarios={
+          horarios
+        }
+
+        fechaInicial={
+          fechaSeleccionada
         }
 
         onCerrar={
@@ -296,6 +411,7 @@ export default function ReservasPage() {
         }
 
       />
+      )}
 
 
     </section>

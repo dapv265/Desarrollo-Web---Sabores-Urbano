@@ -129,7 +129,7 @@ npm run seed:clientes
 
 Este comando **borra y vuelve a crear** únicamente las colecciones `usuarios` y `clientes` (asegurando que existan los restaurantes `LOC-01`, `LOC-02` y `LOC-03` sin borrar reportes ni mesas/reservas).
 
-Perfiles de desarrollo cargados (contraseña compartida: `SaboresDev2026!`):
+Perfiles de desarrollo cargados (contraseña compartida: `12345678`):
 
 | Perfil | Correo | Restaurante |
 | --- | --- | --- |

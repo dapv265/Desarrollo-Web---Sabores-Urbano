@@ -9,10 +9,12 @@ import authRoutes from './routes/authRoutes.js';
 import clienteRoutes from './routes/clienteRoutes.js';
 import mesaRoutes from './routes/mesaRoutes.js';
 import pedidoRoutes from './routes/pedidoRoutes.js';
+import productoRoutes from './routes/productoRoutes.js';
 import reporteRoutes from './routes/reporteRoutes.js';
 import reservaRoutes from './routes/reservaRoutes.js';
 import restauranteRoutes from './routes/restauranteRoutes.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
+import { sembrarSiVacia } from './seeds/autoSeed.js';
 
 dotenv.config();
 
@@ -38,6 +40,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/mesas', mesaRoutes);
 app.use('/api/pedidos', pedidoRoutes);
+app.use('/api/productos', productoRoutes);
 app.use('/api/reportes', reporteRoutes);
 app.use('/api/reservas', reservaRoutes);
 app.use('/api/restaurantes', restauranteRoutes);
@@ -47,6 +50,11 @@ app.use(errorHandler);
 
 const iniciarServidor = async () => {
   await connectDB();
+
+  // Con AUTO_SEED=false no se cargan datos de ejemplo al iniciar
+  if (process.env.AUTO_SEED !== 'false') {
+    await sembrarSiVacia();
+  }
 
   app.listen(PORT, () => {
     console.log(`Servidor funcionando en puerto ${PORT}`);

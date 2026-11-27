@@ -8,10 +8,13 @@ import {
 } from "lucide-react";
 
 import ReservaCard from "./ReservaCard";
+import { formatearFechaLarga } from "../../utils/reservasUtils";
 
 export default function CalendarioReservas({
   mesas,
   horarios,
+  fecha,
+  onCambiarDia,
   reservas,
   vista,
   onCambiarVista,
@@ -28,8 +31,11 @@ export default function CalendarioReservas({
       reservasActivas.map((reserva) => reserva.mesa)
     ).size;
 
-  const ocupacion =
-    Math.round((mesasOcupadas / mesas.length) * 100);
+  const ocupacion = mesas.length
+    ? Math.round((mesasOcupadas / mesas.length) * 100)
+    : 0;
+
+  const tituloFecha = formatearFechaLarga(fecha);
 
   const personasReservadas =
     reservasActivas.reduce(
@@ -49,15 +55,23 @@ export default function CalendarioReservas({
 
         <div className="navegacion-fecha">
 
-          <button type="button">
+          <button
+            type="button"
+            onClick={() => onCambiarDia(-1)}
+            aria-label="Día anterior"
+          >
             <ChevronLeft />
           </button>
 
           <h2>
-            Viernes, 16 de octubre de 2026
+            {tituloFecha.charAt(0).toUpperCase() + tituloFecha.slice(1)}
           </h2>
 
-          <button type="button">
+          <button
+            type="button"
+            onClick={() => onCambiarDia(1)}
+            aria-label="Día siguiente"
+          >
             <ChevronRight />
           </button>
 

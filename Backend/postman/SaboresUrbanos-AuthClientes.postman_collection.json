@@ -48,7 +48,7 @@
     },
     {
       "key": "demoPassword",
-      "value": "SaboresDev2026!",
+      "value": "12345678",
       "type": "string",
       "description": "Contraseña fija exclusivamente para desarrollo local."
     }

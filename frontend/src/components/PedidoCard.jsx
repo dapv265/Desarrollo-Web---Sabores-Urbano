@@ -1,4 +1,3 @@
-import React from 'react';
 import { Clock, Check } from 'lucide-react';
 
 export default function PedidoCard({ pedido, onUpdateStatus }) {

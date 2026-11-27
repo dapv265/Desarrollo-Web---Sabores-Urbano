@@ -2,10 +2,11 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { connectDB } from '../config/db.js';
 import { Pedido } from '../models/Pedido.js';
+import { esEjecucionDirecta } from './esEjecucionDirecta.js';
 
 dotenv.config();
 
-const pedidosIniciales = [
+export const pedidosIniciales = [
   {
     mesaId: 'T-01',
     mesaNombre: 'T-01',
@@ -83,4 +84,6 @@ const poblarPedidos = async () => {
   }
 };
 
-poblarPedidos();
+if (esEjecucionDirecta(import.meta.url)) {
+  poblarPedidos();
+}

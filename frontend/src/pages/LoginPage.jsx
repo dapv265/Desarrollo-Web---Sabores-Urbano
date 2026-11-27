@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/useAuth";
-import { obtenerRutaInicial, ROLES_CLIENTES_LECTURA } from "../auth/roles";
+import { obtenerRutaInicial, puedeVisitarRuta } from "../auth/roles";
 import { iniciarSesion } from "../services/authService";
 
 const LoginPage = () => {
@@ -22,7 +22,7 @@ const LoginPage = () => {
     const rol = session.usuario.rol;
     const requested = location.state?.from;
     const canVisitRequested =
-      requested === "/clientes" && ROLES_CLIENTES_LECTURA.includes(rol);
+      puedeVisitarRuta(requested, rol);
     const destination = canVisitRequested ? requested : obtenerRutaInicial(rol);
 
     if (destination) {
@@ -42,7 +42,7 @@ const LoginPage = () => {
       const rol = result.usuario?.rol;
       const requested = location.state?.from;
       const canVisitRequested =
-        requested === "/clientes" && ROLES_CLIENTES_LECTURA.includes(rol);
+        puedeVisitarRuta(requested, rol);
       const destination = canVisitRequested
         ? requested
         : obtenerRutaInicial(rol);

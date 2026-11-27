@@ -1,7 +1,7 @@
 ﻿
 import { Mesa } from '../models/Mesa.js';
 import { Reserva } from '../models/Reserva.js';
-import { Pedido } from '../models/Pedido.js';
+import { Pedido, ESTADOS_PEDIDO_ABIERTO } from '../models/Pedido.js';
 import { Restaurante } from '../models/Restaurante.js';
 
 import {
@@ -236,6 +236,20 @@ export const actualizarEstadoMesa = async (req, res) => {
       });
     }
 
+    // Una mesa con un pedido abierto sigue ocupada hasta que se cobre o cancele
+    if (estado !== 'ocupada') {
+      const pedidoAbierto = await Pedido.exists({
+        mesaId: id,
+        estado: { $in: ESTADOS_PEDIDO_ABIERTO }
+      });
+
+      if (pedidoAbierto) {
+        return res.status(409).json({
+          mensaje: 'La mesa tiene un pedido abierto. Cóbralo o cancélalo en Pedidos para liberarla.'
+        });
+      }
+    }
+
     const mesa = await Mesa.findOneAndUpdate(
       { id },
       { estado },
@@ -447,6 +461,20 @@ export const actualizarMesa = async (req, res) => {
       return res.status(409).json({
         mensaje: 'La capacidad es insuficiente para una reserva existente'
       });
+    }
+
+    // Una mesa con un pedido abierto sigue ocupada hasta que se cobre o cancele
+    if (datos.estado !== 'ocupada' && mesa.estado === 'ocupada') {
+      const pedidoAbierto = await Pedido.exists({
+        mesaId: id,
+        estado: { $in: ESTADOS_PEDIDO_ABIERTO }
+      });
+
+      if (pedidoAbierto) {
+        return res.status(409).json({
+          mensaje: 'La mesa tiene un pedido abierto. Cóbralo o cancélalo en Pedidos para liberarla.'
+        });
+      }
     }
 
     // Proteger asociaciones existentes

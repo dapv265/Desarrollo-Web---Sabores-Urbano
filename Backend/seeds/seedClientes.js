@@ -6,10 +6,11 @@ import { ROLES } from '../constants/roles.js';
 import { Cliente } from '../models/Cliente.js';
 import { Restaurante } from '../models/Restaurante.js';
 import { Usuario } from '../models/Usuario.js';
+import { esEjecucionDirecta } from './esEjecucionDirecta.js';
 
 dotenv.config();
 
-const DEVELOPMENT_PASSWORD = 'SaboresDev2026!';
+const DEVELOPMENT_PASSWORD = '12345678';
 
 const RESTAURANTES_BASE = [
   {
@@ -44,7 +45,7 @@ const RESTAURANTES_BASE = [
   },
 ];
 
-const CLIENTES_SEED = [
+export const CLIENTES_SEED = [
   {
     id: 1,
     nombre: 'Juan Pérez',
@@ -97,7 +98,7 @@ const CLIENTES_SEED = [
   },
 ];
 
-const USUARIOS_SEED = [
+export const USUARIOS_SEED = [
   {
     nombre: 'Administración General Demo',
     email: 'admin.general@saboresurbanos.dev',
@@ -132,7 +133,7 @@ const USUARIOS_SEED = [
   },
 ];
 
-async function asegurarRestaurantes() {
+export async function asegurarRestaurantes() {
   const mapaPorCodigo = new Map();
 
   for (const data of RESTAURANTES_BASE) {
@@ -179,7 +180,9 @@ async function seedClientesYUsuarios() {
   }
 }
 
-seedClientesYUsuarios().catch((error) => {
-  console.error('Error al ejecutar el seed de clientes y usuarios:', error);
-  process.exitCode = 1;
-});
+if (esEjecucionDirecta(import.meta.url)) {
+  seedClientesYUsuarios().catch((error) => {
+    console.error('Error al ejecutar el seed de clientes y usuarios:', error);
+    process.exitCode = 1;
+  });
+}

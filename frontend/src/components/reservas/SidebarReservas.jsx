@@ -8,8 +8,8 @@ import MiniCalendario from "./MiniCalendario";
 import FiltrosReservas from "./FiltrosReservas";
 
 export default function SidebarReservas({
-  diaSeleccionado,
-  onSeleccionarDia,
+  fechaSeleccionada,
+  onSeleccionarFecha,
   estados,
   onCambiarEstado,
   onLimpiar,
@@ -43,8 +43,8 @@ export default function SidebarReservas({
         </div>
 
         <MiniCalendario
-          diaSeleccionado={diaSeleccionado}
-          onSeleccionarDia={onSeleccionarDia}
+          fechaSeleccionada={fechaSeleccionada}
+          onSeleccionarFecha={onSeleccionarFecha}
         />
 
         <div className="separador-lateral" />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   ReceiptText,
@@ -15,15 +15,53 @@ import HistorialPrecios
   from "../components/menu/HistorialPrecios";
 
 import {
-  historialPreciosInicial,
-  pedidosHistoricos,
-  productosIniciales,
-} from "../data/preciosData";
+  cambiarPrecioProducto,
+  obtenerCategorias,
+  obtenerProductos,
+} from "../services/productosService";
+
+import { obtenerPedidos } from "../services/pedidosService";
+
+import { useAuth } from "../auth/useAuth";
 
 import "../styles/precios.css";
 
 
+// Convierte el historial guardado en cada producto al formato del modal
+function construirHistorial(productos) {
+  return productos.flatMap((producto) =>
+    (producto.historialPrecios || []).map((cambio, indice) => ({
+      id: `${producto.id}-${indice}`,
+      productoId: producto.id,
+      precioAnterior: cambio.precioAnterior,
+      precioNuevo: cambio.precioNuevo,
+      fecha: new Date(cambio.fecha).toLocaleDateString("es-CL"),
+    }))
+  );
+}
+
+// Los pedidos guardan el precio con el que se vendió cada producto
+function construirPedidosHistoricos(pedidos) {
+  return pedidos
+    .filter((pedido) => pedido.items.length > 0)
+    .map((pedido) => ({
+      id: pedido._id,
+      numero: `${pedido.mesaNombre} · ${pedido.estado}`,
+      fecha: new Date(pedido.createdAt).toLocaleString("es-CL"),
+      productos: pedido.items.map((item) => ({
+        clave: item._id || item.id,
+        productoId: item.productoId,
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        precioUnitario: item.precio,
+      })),
+    }));
+}
+
 export default function PreciosPage() {
+
+  const { session } = useAuth();
+  const token = session?.token;
 
   // =========================================================
   // PRODUCTOS
@@ -32,17 +70,52 @@ export default function PreciosPage() {
   const [
     productos,
     setProductos,
-  ] = useState(productosIniciales);
+  ] = useState([]);
+
+  const [
+    pedidosHistoricos,
+    setPedidosHistoricos,
+  ] = useState([]);
+
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let activo = true;
+
+    // El historial de pedidos requiere sesión; sin ella se muestran solo los productos
+    const pedidosPromesa = token
+      ? obtenerPedidos(token, ["Pagado", "Pendiente", "Preparando", "Listo"]).catch(() => [])
+      : Promise.resolve([]);
+
+    Promise.all([obtenerProductos(), obtenerCategorias(), pedidosPromesa])
+      .then(([productosApi, categoriasApi, pedidosApi]) => {
+        if (!activo) return;
+
+        const nombres = new Map(categoriasApi.map((c) => [c.id, c.nombre]));
+        setProductos(
+          productosApi.map((producto) => ({
+            ...producto,
+            categoria: nombres.get(producto.categoriaId) || "Sin categoría",
+          }))
+        );
+        setPedidosHistoricos(construirPedidosHistoricos(pedidosApi));
+        setError("");
+      })
+      .catch((err) => {
+        if (activo) setError(err.message);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [token]);
 
 
   // =========================================================
   // HISTORIAL DE PRECIOS
   // =========================================================
 
-  const [
-    historialPrecios,
-    setHistorialPrecios,
-  ] = useState(historialPreciosInicial);
+  const historialPrecios = construirHistorial(productos);
 
 
   // =========================================================
@@ -101,69 +174,32 @@ export default function PreciosPage() {
   // CAMBIAR PRECIO
   // =========================================================
 
-  function cambiarPrecio(
+  async function cambiarPrecio(
     producto,
     nuevoPrecio
   ) {
 
-    const cambio = {
-
-      id: Date.now(),
-
-      productoId:
+    try {
+      const actualizado = await cambiarPrecioProducto(
         producto.id,
-
-      precioAnterior:
-        producto.precio,
-
-      precioNuevo:
         nuevoPrecio,
+        "Cambio desde Gestión de precios"
+      );
 
-      fecha:
-        new Date()
-          .toISOString()
-          .split("T")[0],
-
-    };
-
-
-    // Guardamos el cambio en el historial.
-    setHistorialPrecios(
-      (historialActual) => [
-        ...historialActual,
-        cambio,
-      ]
-    );
-
-
-    // Cambiamos solamente el precio actual
-    // del producto.
-    setProductos(
-      (productosActuales) =>
-        productosActuales.map(
-          (item) => {
-
-            if (
-              item.id === producto.id
-            ) {
-
-              return {
-                ...item,
-                precio: nuevoPrecio,
-              };
-
-            }
-
-            return item;
-
-          }
+      // Solo cambia el precio actual; los pedidos guardan su propio precio
+      setProductos((productosActuales) =>
+        productosActuales.map((item) =>
+          item.id === actualizado.id
+            ? { ...actualizado, categoria: item.categoria }
+            : item
         )
-    );
-
-
-    setModalPrecioAbierto(false);
-
-    setProductoSeleccionado(null);
+      );
+      setError("");
+      setModalPrecioAbierto(false);
+      setProductoSeleccionado(null);
+    } catch (err) {
+      setError(err.message);
+    }
 
   }
 
@@ -203,6 +239,12 @@ export default function PreciosPage() {
 
         </header>
 
+
+        {error && (
+          <p className="bg-red-50 text-red-700 border-l-4 border-red-500 p-3 rounded mb-4" role="alert">
+            {error}
+          </p>
+        )}
 
         {/* ===================================================
             PRODUCTOS
@@ -276,7 +318,7 @@ export default function PreciosPage() {
                   <div className="pedido-historico-cabecera">
 
                     <strong>
-                      Pedido #{pedido.id}
+                      Pedido {pedido.numero}
                     </strong>
 
                     <span>
@@ -291,7 +333,7 @@ export default function PreciosPage() {
 
                       <div
                         key={
-                          `${pedido.id}-${producto.productoId}`
+                          producto.clave
                         }
                         className="producto-pedido-historico"
                       >

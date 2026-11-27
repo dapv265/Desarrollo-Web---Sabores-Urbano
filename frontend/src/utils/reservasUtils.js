@@ -112,3 +112,41 @@ export function comprobarDisponibilidadReserva({
       `Mesa ${numeroMesa} disponible entre ${hora} y ${horaFinal}.`,
   };
 }
+
+
+// =========================================================
+// FECHAS (formato AAAA-MM-DD, igual que el backend)
+// =========================================================
+
+const aDosDigitos = (numero) => String(numero).padStart(2, "0");
+
+// Convierte un Date a "AAAA-MM-DD" usando la hora local
+export function fechaATexto(fecha) {
+  return `${fecha.getFullYear()}-${aDosDigitos(fecha.getMonth() + 1)}-${aDosDigitos(fecha.getDate())}`;
+}
+
+// Convierte "AAAA-MM-DD" a Date (hora local, mediodía para evitar saltos de zona horaria)
+export function textoAFecha(texto) {
+  const [anio, mes, dia] = texto.split("-").map(Number);
+  return new Date(anio, mes - 1, dia, 12);
+}
+
+export function fechaDeHoy() {
+  return fechaATexto(new Date());
+}
+
+export function sumarDias(texto, dias) {
+  const fecha = textoAFecha(texto);
+  fecha.setDate(fecha.getDate() + dias);
+  return fechaATexto(fecha);
+}
+
+// Ej: "viernes, 16 de octubre de 2026"
+export function formatearFechaLarga(texto) {
+  return textoAFecha(texto).toLocaleDateString("es-CL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}

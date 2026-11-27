@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BadgeCheck,
   Search,
@@ -9,14 +9,19 @@ import {
 import ProductoCard from "../components/menu/ProductoCard";
 import ModalEditarProducto from "../components/menu/ModalEditarProducto";
 import {
-  categoriasIniciales,
-  productosIniciales,
-} from "../data/menuData";
+  actualizarProducto,
+  cambiarPrecioProducto,
+  obtenerCategorias,
+  obtenerProductos,
+} from "../services/productosService";
 
 import "../styles/menu.css";
 
 export default function MenuPage() {
-  const [productos, setProductos] = useState(productosIniciales);
+  const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("todas");
   const [busqueda, setBusqueda] = useState("");
   const [
@@ -25,6 +30,36 @@ export default function MenuPage() {
   ] = useState(null);
   const [modalEditarAbierto, setModalEditarAbierto] =
     useState(false);
+
+  useEffect(() => {
+    let activo = true;
+
+    Promise.all([obtenerProductos(), obtenerCategorias()])
+      .then(([productosApi, categoriasApi]) => {
+        if (!activo) return;
+        setProductos(productosApi);
+        setCategorias(categoriasApi);
+        setError("");
+      })
+      .catch((err) => {
+        if (activo) setError(err.message);
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  function reemplazarProducto(productoActualizado) {
+    setProductos((productosActuales) =>
+      productosActuales.map((item) =>
+        item.id === productoActualizado.id ? productoActualizado : item
+      )
+    );
+  }
 
   const productosFiltrados = productos.filter((producto) => {
     const coincideCategoria =
@@ -50,23 +85,26 @@ export default function MenuPage() {
 
   function obtenerCategoria(categoriaId) {
     return (
-      categoriasIniciales.find(
+      categorias.find(
         (categoria) => categoria.id === categoriaId
       )?.nombre || "Sin categoria"
     );
   }
 
-  function cambiarDisponibilidad(productoId) {
-    setProductos((productosActuales) =>
-      productosActuales.map((producto) =>
-        producto.id === productoId
-          ? {
-              ...producto,
-              disponible: !producto.disponible,
-            }
-          : producto
-      )
-    );
+  async function cambiarDisponibilidad(productoId) {
+    const producto = productos.find((item) => item.id === productoId);
+    if (!producto) return;
+
+    try {
+      reemplazarProducto(
+        await actualizarProducto(productoId, {
+          disponible: !producto.disponible,
+        })
+      );
+      setError("");
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   function editarProducto(producto) {
@@ -74,17 +112,28 @@ export default function MenuPage() {
     setModalEditarAbierto(true);
   }
 
-  function guardarProducto(productoActualizado) {
-    setProductos((productosActuales) =>
-      productosActuales.map((item) =>
-        item.id === productoActualizado.id
-          ? productoActualizado
-          : item
-      )
-    );
+  async function guardarProducto(productoEditado) {
+    const original = productos.find((item) => item.id === productoEditado.id);
 
-    setModalEditarAbierto(false);
-    setProductoSeleccionado(null);
+    try {
+      let guardado = await actualizarProducto(productoEditado.id, productoEditado);
+
+      // El precio se guarda aparte para que quede en el historial de Precios
+      if (original && original.precio !== productoEditado.precio) {
+        guardado = await cambiarPrecioProducto(
+          productoEditado.id,
+          productoEditado.precio,
+          "Editado desde Menú"
+        );
+      }
+
+      reemplazarProducto(guardado);
+      setError("");
+      setModalEditarAbierto(false);
+      setProductoSeleccionado(null);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   function cerrarModalEditar() {
@@ -106,6 +155,18 @@ export default function MenuPage() {
 
           <UtensilsCrossed />
         </header>
+
+        {error && (
+          <p className="mensaje-menu-vacio" role="alert">
+            {error}
+          </p>
+        )}
+
+        {cargando && (
+          <p className="mensaje-menu-vacio" role="status">
+            Cargando menú...
+          </p>
+        )}
 
         <section className="resumen-general-menu">
           <article>
@@ -199,7 +260,7 @@ export default function MenuPage() {
                 Todas
               </button>
 
-              {categoriasIniciales.map((categoria) => (
+              {categorias.map((categoria) => (
                 <button
                   key={categoria.id}
                   type="button"
@@ -249,7 +310,7 @@ export default function MenuPage() {
       <ModalEditarProducto
         abierto={modalEditarAbierto}
         producto={productoSeleccionado}
-        categorias={categoriasIniciales}
+        categorias={categorias}
         onCerrar={cerrarModalEditar}
         onGuardar={guardarProducto}
       />

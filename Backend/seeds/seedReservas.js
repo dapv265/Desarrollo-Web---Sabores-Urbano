@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDB } from '../config/db.js';
 import { Mesa } from '../models/Mesa.js';
 import { Reserva } from '../models/Reserva.js';
+import { esEjecucionDirecta } from './esEjecucionDirecta.js';
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ const ana = { clienteRut: '20.111.222-1', cliente: 'Ana Martínez', telefono: '+
 const luis = { clienteRut: '11.222.333-4', cliente: 'Luis Ramírez', telefono: '+56 9 9999 8888' };
 
 // Mesas de seedMesas.js (sin M-10, que está fuera de servicio)
-const reservasIniciales = [
+export const reservasIniciales = [
   // 2026-10-16 (mismo día que el frontend)
   { ...juan, personas: 2, fecha: '2026-10-16', inicio: '12:30', fin: '13:30', mesa: 'T-02', observaciones: 'Prefiere mesa junto a ventana.', estado: 'confirmada' },
   { ...ana, personas: 4, fecha: '2026-10-16', inicio: '13:00', fin: '14:30', mesa: 'M-05', observaciones: 'Celebración de cumpleaños.', estado: 'pendiente' },
@@ -78,4 +79,6 @@ const poblarReservas = async () => {
   }
 };
 
-poblarReservas();
+if (esEjecucionDirecta(import.meta.url)) {
+  poblarReservas();
+}

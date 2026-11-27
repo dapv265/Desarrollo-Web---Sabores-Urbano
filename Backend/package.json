@@ -11,6 +11,7 @@
     "seed:pedidos": "node seeds/seedPedidos.js",
     "seed:reservas": "node seeds/seedReservas.js",
     "seed:clientes": "node seeds/seedClientes.js",
+    "seed:productos": "node seeds/seedProductos.js",
     "test": "node --test tests/*.test.js",
     "test:reservas": "newman run postman/SaboresUrbanos-Reservas.postman_collection.json -e postman/SaboresUrbanos-Local.postman_environment.json"
   },

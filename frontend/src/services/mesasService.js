@@ -1,10 +1,7 @@
 
 // Servicio de integración con el backend - RF3 y RF5
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:5000/api"
-).replace(/\/+$/, "");
+import { API_BASE_URL } from "./api";
 
 // Obtener todas las mesas - RF3
 export async function obtenerMesas() {

@@ -1,53 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { ChefHat, Check, UtensilsCrossed } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChefHat, Check, UtensilsCrossed, AlertCircle } from 'lucide-react';
 import PedidoCard from '../../components/PedidoCard';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/pedidos';
+import { useAuth } from '../../auth/useAuth';
+import {
+  obtenerPedidos,
+  cambiarEstadoPedido,
+  obtenerIdPedido,
+  ESTADOS_PEDIDO_ABIERTO,
+} from '../../services/pedidosService';
 
 export default function CocinaPage() {
+  const { session } = useAuth();
+  const token = session?.token;
   const [pedidos, setPedidos] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const loadPedidos = async () => {
       try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        setPedidos(data);
-      } catch (error) {
-        console.error('Error al cargar pedidos:', error);
+        setPedidos(await obtenerPedidos(token, ESTADOS_PEDIDO_ABIERTO));
+        setError('');
+      } catch (err) {
+        setError(err.message);
       }
     };
 
     loadPedidos();
     const interval = setInterval(loadPedidos, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [token]);
 
+  // Solo se envía el nuevo estado: el backend actualiza los productos sin pisar
+  // los que el garzón haya agregado mientras tanto
   const handleUpdateStatus = async (pedidoId, nuevoEstado) => {
-    const pedido = pedidos.find(p => (p._id || p.id) === pedidoId);
-    if (!pedido) return;
-
-    const itemsActualizados = pedido.items.map(item => {
-      if (nuevoEstado === 'Listo') return { ...item, estado: 'Listo' };
-      if (nuevoEstado === 'Preparando' && item.estado === 'Pendiente') return { ...item, estado: 'Preparando' };
-      return item;
-    });
-
     try {
-      const res = await fetch(`${API_URL}/${pedidoId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: nuevoEstado, items: itemsActualizados })
-      });
-      const pedidoActualizado = await res.json();
-      setPedidos(pedidos.map(p => ((p._id || p.id) === pedidoId ? pedidoActualizado : p)));
-    } catch (error) {
-      console.error('Error al actualizar estado:', error);
+      const pedidoActualizado = await cambiarEstadoPedido(token, pedidoId, nuevoEstado);
+      setPedidos(prev => prev.map(p => (obtenerIdPedido(p) === pedidoId ? pedidoActualizado : p)));
+      setError('');
+    } catch (err) {
+      setError(`No se pudo actualizar: ${err.message}`);
+      try {
+        setPedidos(await obtenerPedidos(token, ESTADOS_PEDIDO_ABIERTO));
+      } catch {
+        // Se reintentará en el próximo refresco
+      }
     }
   };
 
-  const pedidosCocina = pedidos.filter(p => p.items.length > 0 && p.estado !== 'Listo' && p.estado !== 'Pagado');
-  const pedidosListos = pedidos.filter(p => p.items.length > 0 && p.estado === 'Listo');
+  // Cocina solo ve lo que el garzón ya envió; los productos "sin enviar" quedan ocultos
+  const pedidosEnviados = pedidos
+    .map(p => ({ ...p, items: p.items.filter(item => item.estado !== 'Borrador') }))
+    .filter(p => p.items.length > 0);
+
+  const pedidosCocina = pedidosEnviados.filter(p => p.estado !== 'Listo');
+  const pedidosListos = pedidosEnviados.filter(p => p.estado === 'Listo');
 
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
@@ -76,6 +82,13 @@ export default function CocinaPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-50 border-l-4 border-status-ocupado p-4 mb-6 rounded flex items-center gap-3">
+            <AlertCircle className="text-status-ocupado w-5 h-5" />
+            <p className="text-status-ocupado font-medium">{error}</p>
+          </div>
+        )}
+
         <h2 className="text-2xl text-brand-primary mb-6 border-b-2 border-brand-primary pb-2 inline-block font-bold">Pedidos Activos</h2>
 
         {pedidosCocina.length === 0 ? (
@@ -87,7 +100,7 @@ export default function CocinaPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {pedidosCocina.map(pedido => (
-              <PedidoCard key={pedido._id || pedido.id} pedido={pedido} onUpdateStatus={handleUpdateStatus} />
+              <PedidoCard key={obtenerIdPedido(pedido)} pedido={pedido} onUpdateStatus={handleUpdateStatus} />
             ))}
           </div>
         )}
@@ -97,7 +110,7 @@ export default function CocinaPage() {
             <h2 className="text-2xl text-gray-600 mb-6 border-b-2 border-gray-200 pb-2 inline-block font-bold">Recientemente Listos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 opacity-70">
               {pedidosListos.map(pedido => (
-                <div key={pedido._id || pedido.id} className="bg-white rounded-xl shadow-sm p-4 flex justify-between items-center border border-gray-200">
+                <div key={obtenerIdPedido(pedido)} className="bg-white rounded-xl shadow-sm p-4 flex justify-between items-center border border-gray-200">
                   <div>
                     <h4 className="font-bold text-gray-800">{pedido.mesaNombre}</h4>
                     <p className="text-sm text-gray-500">{pedido.items.length} productos</p>

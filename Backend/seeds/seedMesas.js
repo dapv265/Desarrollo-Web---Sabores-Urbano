@@ -3,10 +3,11 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { connectDB } from '../config/db.js';
 import { Mesa } from '../models/Mesa.js';
+import { esEjecucionDirecta } from './esEjecucionDirecta.js';
 
 dotenv.config();
 
-const mesasIniciales = [
+export const mesasIniciales = [
   { id: 'T-01', numero: 'T-01', zona: 'Terraza', capacidad: 4, estado: 'disponible' },
   { id: 'T-02', numero: 'T-02', zona: 'Terraza', capacidad: 2, estado: 'ocupada' },
   { id: 'T-03', numero: 'T-03', zona: 'Terraza', capacidad: 6, estado: 'reservada' },
@@ -49,4 +50,6 @@ const poblarMesas = async () => {
   }
 };
 
-poblarMesas();
+if (esEjecucionDirecta(import.meta.url)) {
+  poblarMesas();
+}

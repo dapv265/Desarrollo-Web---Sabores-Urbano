@@ -10,6 +10,7 @@ import {
 export default function DetalleReserva({
   reserva,
   onCerrar,
+  onCambiarEstado,
 }) {
   if (!reserva) {
     return (
@@ -91,6 +92,34 @@ export default function DetalleReserva({
           <Phone />
           {reserva.telefono}
         </p>
+
+        {reserva.clienteRut && (
+          <p>
+            RUT {reserva.clienteRut}
+          </p>
+        )}
+
+        {reserva.estado !== "cancelada" && (
+          <div className="flex gap-2 mt-4">
+            {reserva.estado !== "confirmada" && (
+              <button
+                type="button"
+                className="boton-confirmar-reserva"
+                onClick={() => onCambiarEstado(reserva, "confirmada")}
+              >
+                Confirmar
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="boton-cambiar-mesa"
+              onClick={() => onCambiarEstado(reserva, "cancelada")}
+            >
+              Cancelar reserva
+            </button>
+          </div>
+        )}
 
       </div>
 

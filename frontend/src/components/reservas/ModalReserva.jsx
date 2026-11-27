@@ -4,6 +4,7 @@ import {
   Armchair,
   Calendar,
   CalendarPlus,
+  IdCard,
   Clock,
   HeartHandshake,
   MessageSquareText,
@@ -14,100 +15,122 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  comprobarDisponibilidadReserva,
-  calcularHoraFinal,
-} from "../../utils/reservasUtils";
+import { comprobarDisponibilidadReserva } from "../../services/reservasService";
+
+const MENSAJE_INICIAL =
+  "Seleccione fecha, hora y mesa para comprobar disponibilidad.";
 
 export default function ModalReserva({
   abierto,
-  reservas,
+  mesas,
+  horarios,
+  fechaInicial,
   onCerrar,
   onCrearReserva,
 }) {
   const [cliente, setCliente] = useState("");
+  const [clienteRut, setClienteRut] = useState("");
   const [telefono, setTelefono] = useState("");
   const [personas, setPersonas] = useState("2");
-  const [fecha, setFecha] = useState("");
+  const [fecha, setFecha] = useState(fechaInicial);
   const [hora, setHora] = useState("");
   const [duracion, setDuracion] = useState("60");
-  const [mesa, setMesa] = useState("1");
+  const [mesa, setMesa] = useState("");
+  const [guardando, setGuardando] = useState(false);
   const [observaciones, setObservaciones] =
     useState("");
 
   const [mensajeDisponibilidad, setMensajeDisponibilidad] =
     useState({
       disponible: null,
-      mensaje:
-        "Seleccione fecha, hora y mesa para comprobar disponibilidad.",
+      mensaje: MENSAJE_INICIAL,
     });
 
   if (!abierto) {
     return null;
   }
 
-  function comprobarDisponibilidad() {
-    const resultado =
-      comprobarDisponibilidadReserva({
-        reservas,
+  // Mesas con capacidad suficiente para la cantidad de personas
+  const mesasAptas = mesas.filter(
+    (item) => item.capacidad >= Number(personas)
+  );
+
+  async function comprobarDisponibilidad() {
+    if (!fecha || !hora || !mesa) {
+      const resultado = {
+        disponible: false,
+        mensaje: "Complete fecha, hora y mesa para comprobar disponibilidad.",
+      };
+      setMensajeDisponibilidad(resultado);
+      return resultado;
+    }
+
+    try {
+      const resultado = await comprobarDisponibilidadReserva({
         fecha,
-        hora,
-        mesa,
+        inicio: hora,
         duracion,
+        mesa,
+        personas,
       });
-
-    setMensajeDisponibilidad(resultado);
-
-    return resultado;
+      setMensajeDisponibilidad(resultado);
+      return resultado;
+    } catch (error) {
+      const resultado = { disponible: false, mensaje: error.message };
+      setMensajeDisponibilidad(resultado);
+      return resultado;
+    }
   }
 
-  function manejarSubmit(evento) {
+  async function manejarSubmit(evento) {
     evento.preventDefault();
 
     const resultado =
-      comprobarDisponibilidad();
+      await comprobarDisponibilidad();
 
     if (!resultado.disponible) {
       return;
     }
 
     const nuevaReserva = {
-      id: Date.now(),
-      cliente,
-      telefono,
+      clienteRut: clienteRut.trim().toUpperCase(),
+      cliente: cliente.trim(),
+      telefono: telefono.trim(),
       personas: Number(personas),
       fecha,
       inicio: hora,
-      fin: calcularHoraFinal(
-        hora,
-        duracion
-      ),
-      mesa: Number(mesa),
+      duracion: Number(duracion),
+      mesa,
       observaciones,
       estado: "confirmada",
     };
 
-    onCrearReserva(nuevaReserva);
-
-    limpiarFormulario();
-
-    onCerrar();
+    setGuardando(true);
+    try {
+      await onCrearReserva(nuevaReserva);
+      limpiarFormulario();
+      onCerrar();
+    } catch (error) {
+      setMensajeDisponibilidad({ disponible: false, mensaje: error.message });
+    } finally {
+      setGuardando(false);
+    }
   }
 
   function limpiarFormulario() {
     setCliente("");
+    setClienteRut("");
     setTelefono("");
     setPersonas("2");
-    setFecha("");
+    setFecha(fechaInicial);
     setHora("");
     setDuracion("60");
-    setMesa("1");
+    setMesa("");
     setObservaciones("");
 
     setMensajeDisponibilidad({
       disponible: null,
-      mensaje:
-        "Seleccione fecha, hora y mesa para comprobar disponibilidad.",
+      mensaje: MENSAJE_INICIAL,
     });
   }
 
@@ -182,6 +205,28 @@ export default function ModalReserva({
 
           <div className="grupo-formulario">
 
+            <label htmlFor="rutCliente">
+              <IdCard />
+              RUT
+            </label>
+
+            <input
+              id="rutCliente"
+              type="text"
+              placeholder="12.345.678-9"
+              pattern="\d{1,2}\.\d{3}\.\d{3}-[\dkK]"
+              title="Formato 12.345.678-9"
+              value={clienteRut}
+              onChange={(evento) =>
+                setClienteRut(evento.target.value)
+              }
+              required
+            />
+
+          </div>
+
+          <div className="grupo-formulario">
+
             <label htmlFor="telefonoCliente">
               <Phone />
               Teléfono
@@ -195,6 +240,7 @@ export default function ModalReserva({
               onChange={(evento) =>
                 setTelefono(evento.target.value)
               }
+              required
             />
 
           </div>
@@ -209,21 +255,16 @@ export default function ModalReserva({
             <select
               id="personasReserva"
               value={personas}
-              onChange={(evento) =>
-                setPersonas(evento.target.value)
-              }
+              onChange={(evento) => {
+                setPersonas(evento.target.value);
+                setMesa("");
+              }}
             >
-              <option value="2">
-                2 personas
-              </option>
-
-              <option value="4">
-                4 personas
-              </option>
-
-              <option value="6">
-                6 personas
-              </option>
+              {Array.from({ length: 12 }, (_, index) => index + 1).map((cantidad) => (
+                <option key={cantidad} value={cantidad}>
+                  {cantidad} {cantidad === 1 ? "persona" : "personas"}
+                </option>
+              ))}
             </select>
 
           </div>
@@ -254,15 +295,21 @@ export default function ModalReserva({
               Hora
             </label>
 
-            <input
+            <select
               id="horaReserva"
-              type="time"
               value={hora}
               onChange={(evento) =>
                 setHora(evento.target.value)
               }
               required
-            />
+            >
+              <option value="">Seleccione hora</option>
+              {horarios.map((horario) => (
+                <option key={horario} value={horario}>
+                  {horario}
+                </option>
+              ))}
+            </select>
 
           </div>
 
@@ -308,30 +355,14 @@ export default function ModalReserva({
               onChange={(evento) =>
                 setMesa(evento.target.value)
               }
+              required
             >
-              <option value="1">
-                Mesa 1 - 2 personas
-              </option>
-
-              <option value="2">
-                Mesa 2 - 2 personas
-              </option>
-
-              <option value="3">
-                Mesa 3 - 4 personas
-              </option>
-
-              <option value="4">
-                Mesa 4 - 4 personas
-              </option>
-
-              <option value="5">
-                Mesa 5 - 6 personas
-              </option>
-
-              <option value="6">
-                Mesa 6 - 6 personas
-              </option>
+              <option value="">Seleccione mesa</option>
+              {mesasAptas.map((item) => (
+                <option key={item.id} value={item.id}>
+                  Mesa {item.numero} - {item.zona} - {item.capacidad} personas
+                </option>
+              ))}
             </select>
 
           </div>
@@ -394,6 +425,7 @@ export default function ModalReserva({
             <button
               type="submit"
               className="boton-confirmar-reserva"
+              disabled={guardando}
             >
               <HeartHandshake />
 

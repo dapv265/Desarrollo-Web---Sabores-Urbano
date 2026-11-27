@@ -3,10 +3,11 @@ import dotenv from 'dotenv';
 import { connectDB } from '../config/db.js';
 import { Restaurante } from '../models/Restaurante.js';
 import { Reporte } from '../models/Reporte.js';
+import { esEjecucionDirecta } from './esEjecucionDirecta.js';
 
 dotenv.config();
 
-const RESTAURANTES_SEED = [
+export const RESTAURANTES_SEED = [
   {
     _id: '672000000000000000000001',
     codigo: 'LOC-01',
@@ -39,6 +40,61 @@ const RESTAURANTES_SEED = [
   },
 ];
 
+// Reportes de ejemplo; recibe los restaurantes ya creados para enlazarlos
+export const construirReportes = ({ providencia, santiagoCentro, lasCondes }) => [
+  {
+    periodo: '2026-10',
+    restaurante: providencia._id,
+    pedidosTotales: 520,
+    ventasTotales: 8200000,
+    tasaOcupacion: 85,
+    platosMasVendidos: [
+      {
+        nombre: 'Lomo a lo Pobre Urbano',
+        categoria: 'Fondos',
+        cantidad: 180,
+        totalRecaudado: 2340000,
+      },
+      {
+        nombre: 'Pisco Sour Catedral',
+        categoria: 'Bebidas',
+        cantidad: 150,
+        totalRecaudado: 900000,
+      },
+    ],
+  },
+  {
+    periodo: '2026-10',
+    restaurante: santiagoCentro._id,
+    pedidosTotales: 410,
+    ventasTotales: 5950000,
+    tasaOcupacion: 74,
+    platosMasVendidos: [
+      {
+        nombre: 'Pastel de Choclo',
+        categoria: 'Fondos',
+        cantidad: 120,
+        totalRecaudado: 1320000,
+      },
+    ],
+  },
+  {
+    periodo: '2026-10',
+    restaurante: lasCondes._id,
+    pedidosTotales: 310,
+    ventasTotales: 4300000,
+    tasaOcupacion: 68,
+    platosMasVendidos: [
+      {
+        nombre: 'Ceviche Mixto',
+        categoria: 'Entradas',
+        cantidad: 90,
+        totalRecaudado: 1080000,
+      },
+    ],
+  },
+];
+
 const poblarBaseDeDatos = async () => {
   await connectDB();
 
@@ -55,59 +111,9 @@ const poblarBaseDeDatos = async () => {
     const lasCondes = restaurantesCreados.find((r) => r.codigo === 'LOC-03');
 
     console.log('Insertando Reportes...');
-    await Reporte.insertMany([
-      {
-        periodo: '2026-10',
-        restaurante: providencia._id,
-        pedidosTotales: 520,
-        ventasTotales: 8200000,
-        tasaOcupacion: 85,
-        platosMasVendidos: [
-          {
-            nombre: 'Lomo a lo Pobre Urbano',
-            categoria: 'Fondos',
-            cantidad: 180,
-            totalRecaudado: 2340000,
-          },
-          {
-            nombre: 'Pisco Sour Catedral',
-            categoria: 'Bebidas',
-            cantidad: 150,
-            totalRecaudado: 900000,
-          },
-        ],
-      },
-      {
-        periodo: '2026-10',
-        restaurante: santiagoCentro._id,
-        pedidosTotales: 410,
-        ventasTotales: 5950000,
-        tasaOcupacion: 74,
-        platosMasVendidos: [
-          {
-            nombre: 'Pastel de Choclo',
-            categoria: 'Fondos',
-            cantidad: 120,
-            totalRecaudado: 1320000,
-          },
-        ],
-      },
-      {
-        periodo: '2026-10',
-        restaurante: lasCondes._id,
-        pedidosTotales: 310,
-        ventasTotales: 4300000,
-        tasaOcupacion: 68,
-        platosMasVendidos: [
-          {
-            nombre: 'Ceviche Mixto',
-            categoria: 'Entradas',
-            cantidad: 90,
-            totalRecaudado: 1080000,
-          },
-        ],
-      },
-    ]);
+    await Reporte.insertMany(
+      construirReportes({ providencia, santiagoCentro, lasCondes })
+    );
 
     console.log('Base de datos poblada exitosamente.');
   } finally {
@@ -115,7 +121,9 @@ const poblarBaseDeDatos = async () => {
   }
 };
 
-poblarBaseDeDatos().catch((error) => {
-  console.error('Error al poblar la base de datos:', error);
-  process.exitCode = 1;
-});
+if (esEjecucionDirecta(import.meta.url)) {
+  poblarBaseDeDatos().catch((error) => {
+    console.error('Error al poblar la base de datos:', error);
+    process.exitCode = 1;
+  });
+}
