@@ -12,6 +12,8 @@ export default function SidebarReservas({
   onSeleccionarFecha,
   estados,
   onCambiarEstado,
+  personasMinimas,
+  onCambiarPersonas,
   onLimpiar,
 }) {
   return (
@@ -42,7 +44,10 @@ export default function SidebarReservas({
 
         </div>
 
+        {/* La key hace que el mini calendario muestre el mes de la fecha elegida
+            cuando cambia desde fuera (flechas, botón Hoy) */}
         <MiniCalendario
+          key={fechaSeleccionada.slice(0, 7)}
           fechaSeleccionada={fechaSeleccionada}
           onSeleccionarFecha={onSeleccionarFecha}
         />
@@ -52,6 +57,8 @@ export default function SidebarReservas({
         <FiltrosReservas
           estados={estados}
           onCambiarEstado={onCambiarEstado}
+          personasMinimas={personasMinimas}
+          onCambiarPersonas={onCambiarPersonas}
           onLimpiar={onLimpiar}
         />
 

@@ -1,44 +1,44 @@
 import {
   ListFilter,
   RotateCcw,
-  Store,
   UsersRound,
 } from "lucide-react";
 
+import {
+  estadosReserva,
+  opcionesPersonas,
+} from "../../data/reservasData";
+
+// El filtro de restaurante se oculta: las mesas aún no tienen restauranteCodigo
 export default function FiltrosReservas({
   estados,
   onCambiarEstado,
+  personasMinimas,
+  onCambiarPersonas,
   onLimpiar,
 }) {
   return (
     <>
       <section className="seccion-filtro">
 
-        <label htmlFor="restaurante">
-          <Store />
-          Restaurante
-        </label>
-
-        <select id="restaurante">
-          <option>Sede Centro</option>
-          <option>Sede Norte</option>
-          <option>Sede Sur</option>
-        </select>
-
-      </section>
-
-      <section className="seccion-filtro">
-
         <label htmlFor="cantidadPersonas">
           <UsersRound />
-          Cantidad de personas
+          Capacidad de la mesa
         </label>
 
-        <select id="cantidadPersonas">
-          <option value="2">2 personas</option>
-          <option value="4">4 personas</option>
-          <option value="6">6 personas</option>
-          <option value="8">8 personas</option>
+        <select
+          id="cantidadPersonas"
+          value={personasMinimas}
+          onChange={(evento) =>
+            onCambiarPersonas(Number(evento.target.value))
+          }
+        >
+          <option value="0">Todas las mesas</option>
+          {opcionesPersonas.map((cantidad) => (
+            <option key={cantidad} value={cantidad}>
+              {cantidad} o más personas
+            </option>
+          ))}
         </select>
 
       </section>
@@ -50,29 +50,26 @@ export default function FiltrosReservas({
           Estado
         </h3>
 
-        {Object.keys(estados).map((estado) => (
+        {estadosReserva.map(({ valor, texto }) => (
 
           <label
             className="opcion-filtro"
-            key={estado}
+            key={valor}
           >
 
             <input
               type="checkbox"
-              checked={estados[estado]}
+              checked={estados[valor]}
               onChange={() =>
-                onCambiarEstado(estado)
+                onCambiarEstado(valor)
               }
             />
 
             <span
-              className={`punto-estado ${estado}`}
+              className={`punto-estado ${valor}`}
             />
 
-            {estado === "en-espera"
-              ? "En espera"
-              : estado.charAt(0).toUpperCase() +
-                estado.slice(1)}
+            {texto}
 
           </label>
 

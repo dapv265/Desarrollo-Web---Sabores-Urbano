@@ -1,12 +1,4 @@
-export const mesas = [
-  { id: 1, capacidad: 2 },
-  { id: 2, capacidad: 2 },
-  { id: 3, capacidad: 4 },
-  { id: 4, capacidad: 4 },
-  { id: 5, capacidad: 6 },
-  { id: 6, capacidad: 6 },
-];
-
+// Horarios de inicio permitidos (los mismos que valida el backend en utils/horarios.js)
 export const horarios = [
   "12:00",
   "12:30",
@@ -24,53 +16,20 @@ export const horarios = [
   "22:00",
 ];
 
-export const reservasIniciales = [
-  {
-    id: 1,
-    cliente: "Camila Soto",
-    telefono: "+56 9 6123 4567",
-    personas: 2,
-    fecha: "2026-10-16",
-    inicio: "12:30",
-    fin: "13:30",
-    mesa: 1,
-    observaciones: "Prefiere mesa junto a ventana.",
-    estado: "confirmada",
-  },
-  {
-    id: 2,
-    cliente: "Martin Rojas",
-    telefono: "+56 9 7345 1234",
-    personas: 4,
-    fecha: "2026-10-16",
-    inicio: "13:00",
-    fin: "14:30",
-    mesa: 3,
-    observaciones: "Celebracion de cumpleanos.",
-    estado: "pendiente",
-  },
-  {
-    id: 3,
-    cliente: "Valentina Perez",
-    telefono: "+56 9 8876 5401",
-    personas: 6,
-    fecha: "2026-10-16",
-    inicio: "20:00",
-    fin: "21:30",
-    mesa: 5,
-    observaciones: "Solicita silla para bebe.",
-    estado: "en-espera",
-  },
-  {
-    id: 4,
-    cliente: "Diego Fernandez",
-    telefono: "+56 9 9012 3344",
-    personas: 2,
-    fecha: "2026-10-16",
-    inicio: "21:00",
-    fin: "22:00",
-    mesa: 2,
-    observaciones: "",
-    estado: "cancelada",
-  },
+// Estados de una reserva, en el orden en que se muestran
+export const estadosReserva = [
+  { valor: "pendiente", texto: "Pendiente" },
+  { valor: "confirmada", texto: "Confirmada" },
+  { valor: "en-espera", texto: "En espera" },
+  { valor: "cancelada", texto: "Cancelada" },
 ];
+
+// Duraciones que se ofrecen en el modal (minutos)
+export const duraciones = [
+  { valor: 60, texto: "1 hora" },
+  { valor: 90, texto: "1 hora 30 minutos" },
+  { valor: 120, texto: "2 horas" },
+];
+
+// Filtro de capacidad mínima de las mesas
+export const opcionesPersonas = [2, 3, 4, 6, 8];

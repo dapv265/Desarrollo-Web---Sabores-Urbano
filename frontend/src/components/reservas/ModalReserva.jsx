@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Armchair,
@@ -7,7 +7,9 @@ import {
   IdCard,
   Clock,
   HeartHandshake,
+  Info,
   MessageSquareText,
+  Pencil,
   Phone,
   Timer,
   UserRound,
@@ -15,70 +17,190 @@ import {
   X,
 } from "lucide-react";
 
-import { comprobarDisponibilidadReserva } from "../../services/reservasService";
+import { duraciones } from "../../data/reservasData";
+
+import {
+  comprobarDisponibilidadReserva,
+  obtenerReservas,
+} from "../../services/reservasService";
+
+import {
+  calcularDuracion,
+  calcularHoraFinal,
+  hayCruceDeHorario,
+} from "../../utils/reservasUtils";
 
 const MENSAJE_INICIAL =
   "Seleccione fecha, hora y mesa para comprobar disponibilidad.";
 
+const ESTADO_INICIAL_DISPONIBILIDAD = {
+  disponible: null,
+  mensaje: MENSAJE_INICIAL,
+  errores: [],
+};
+
+// Estado de la mesa en tiempo real que conviene avisar (igual se puede reservar)
+const TEXTO_ESTADO_MESA = {
+  ocupada: "ocupada",
+  reservada: "reservada",
+  limpieza: "en limpieza",
+};
+
+// Se monta al abrirse: los valores iniciales se leen solo una vez.
+// `reservaEditar` = reserva a editar (modo edición) o null (nueva reserva).
+// `valoresIniciales` = { fecha, hora, mesa } para una reserva nueva.
 export default function ModalReserva({
-  abierto,
   mesas,
   horarios,
-  fechaInicial,
+  reservaEditar,
+  valoresIniciales,
   onCerrar,
-  onCrearReserva,
+  onGuardar,
 }) {
-  const [cliente, setCliente] = useState("");
-  const [clienteRut, setClienteRut] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [personas, setPersonas] = useState("2");
-  const [fecha, setFecha] = useState(fechaInicial);
-  const [hora, setHora] = useState("");
-  const [duracion, setDuracion] = useState("60");
-  const [mesa, setMesa] = useState("");
-  const [guardando, setGuardando] = useState(false);
+  const esEdicion = Boolean(reservaEditar);
+  const base = reservaEditar ?? {};
+
+  const duracionInicial = esEdicion
+    ? String(calcularDuracion(base.inicio, base.fin))
+    : "60";
+
+  const [cliente, setCliente] = useState(base.cliente ?? "");
+  const [clienteRut, setClienteRut] = useState(base.clienteRut ?? "");
+  const [telefono, setTelefono] = useState(base.telefono ?? "");
+  const [personas, setPersonas] = useState(String(base.personas ?? 2));
+  const [fecha, setFecha] = useState(base.fecha ?? valoresIniciales.fecha);
+  const [hora, setHora] = useState(base.inicio ?? valoresIniciales.hora ?? "");
+  const [duracion, setDuracion] = useState(duracionInicial);
+  const [mesa, setMesa] = useState(base.mesa ?? valoresIniciales.mesa ?? "");
   const [observaciones, setObservaciones] =
-    useState("");
+    useState(base.observaciones ?? "");
+
+  const [comprobando, setComprobando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
 
   const [mensajeDisponibilidad, setMensajeDisponibilidad] =
-    useState({
-      disponible: null,
-      mensaje: MENSAJE_INICIAL,
-    });
+    useState(ESTADO_INICIAL_DISPONIBILIDAD);
 
-  if (!abierto) {
-    return null;
+  // Cerrar con la tecla Escape
+  useEffect(() => {
+    function manejarTecla(evento) {
+      if (evento.key === "Escape") onCerrar();
+    }
+
+    window.addEventListener("keydown", manejarTecla);
+    return () => window.removeEventListener("keydown", manejarTecla);
+  }, [onCerrar]);
+
+  // Si la duración guardada no está en la lista (ej. 150 min), se agrega
+  const opcionesDuracion = duraciones.some(
+    (opcion) => String(opcion.valor) === duracionInicial
+  )
+    ? duraciones
+    : [...duraciones, { valor: Number(duracionInicial), texto: `${duracionInicial} minutos` }];
+
+  // Mesas con capacidad suficiente. Las "fuera" no se ofrecen,
+  // salvo la mesa actual de la reserva que se edita (para no dejar el campo vacío).
+  const mesasAptas = mesas.filter(
+    (item) =>
+      item.capacidad >= Number(personas) &&
+      (item.estado !== "fuera" || item.id === base.mesa)
+  );
+
+  const mesaElegida = mesas.find((item) => item.id === mesa);
+  const estadoMesaAhora = TEXTO_ESTADO_MESA[mesaElegida?.estado];
+
+  const enviando = comprobando || guardando;
+
+  // Cambia un campo y borra el resultado anterior de disponibilidad
+  function cambiarCampo(setter) {
+    return (valor) => {
+      setter(valor);
+      setMensajeDisponibilidad(ESTADO_INICIAL_DISPONIBILIDAD);
+    };
   }
 
-  // Mesas con capacidad suficiente para la cantidad de personas
-  const mesasAptas = mesas.filter(
-    (item) => item.capacidad >= Number(personas)
-  );
+  function cambiarPersonas(valor) {
+    cambiarCampo(setPersonas)(valor);
+
+    // Si la mesa elegida ya no alcanza, se deselecciona
+    const actual = mesas.find((item) => item.id === mesa);
+    if (actual && actual.capacidad < Number(valor)) {
+      setMesa("");
+    }
+  }
+
+  // En edición, el backend puede informar como conflicto a la misma reserva.
+  // Si es así, se revisa que no haya OTRA reserva que se cruce.
+  async function revisarConflictoPropio(resultado) {
+    const horaFinal = calcularHoraFinal(hora, duracion);
+
+    const reservasMesa = await obtenerReservas({ fecha, mesa });
+
+    const otra = reservasMesa.find(
+      (item) =>
+        item._id !== reservaEditar._id &&
+        item.estado !== "cancelada" &&
+        hayCruceDeHorario(hora, horaFinal, item.inicio, item.fin)
+    );
+
+    if (otra) {
+      return {
+        ...resultado,
+        mensaje: `Mesa ${mesa} no disponible entre ${hora} y ${horaFinal} (${otra.cliente}).`,
+        conflicto: otra,
+      };
+    }
+
+    return {
+      disponible: true,
+      mensaje: `Mesa ${mesa} disponible entre ${hora} y ${horaFinal}.`,
+      conflicto: null,
+    };
+  }
 
   async function comprobarDisponibilidad() {
     if (!fecha || !hora || !mesa) {
       const resultado = {
         disponible: false,
         mensaje: "Complete fecha, hora y mesa para comprobar disponibilidad.",
+        errores: [],
       };
       setMensajeDisponibilidad(resultado);
       return resultado;
     }
 
+    setComprobando(true);
+
     try {
-      const resultado = await comprobarDisponibilidadReserva({
+      let resultado = await comprobarDisponibilidadReserva({
         fecha,
         inicio: hora,
         duracion,
         mesa,
         personas,
       });
-      setMensajeDisponibilidad(resultado);
-      return resultado;
+
+      if (
+        esEdicion &&
+        !resultado.disponible &&
+        resultado.conflicto?._id === reservaEditar._id
+      ) {
+        resultado = await revisarConflictoPropio(resultado);
+      }
+
+      const final = { ...resultado, errores: [] };
+      setMensajeDisponibilidad(final);
+      return final;
     } catch (error) {
-      const resultado = { disponible: false, mensaje: error.message };
+      const resultado = {
+        disponible: false,
+        mensaje: error.message,
+        errores: error.errores ?? [],
+      };
       setMensajeDisponibilidad(resultado);
       return resultado;
+    } finally {
+      setComprobando(false);
     }
   }
 
@@ -88,11 +210,14 @@ export default function ModalReserva({
     const resultado =
       await comprobarDisponibilidad();
 
-    if (!resultado.disponible) {
+    // Una reserva cancelada no ocupa la mesa, así que se puede guardar igual
+    const ocupaMesa = !esEdicion || reservaEditar.estado !== "cancelada";
+
+    if (!resultado.disponible && ocupaMesa) {
       return;
     }
 
-    const nuevaReserva = {
+    const datosReserva = {
       clienteRut: clienteRut.trim().toUpperCase(),
       cliente: cliente.trim(),
       telefono: telefono.trim(),
@@ -101,69 +226,62 @@ export default function ModalReserva({
       inicio: hora,
       duracion: Number(duracion),
       mesa,
-      observaciones,
-      estado: "confirmada",
+      observaciones: observaciones.trim(),
     };
 
+    // Las nuevas parten confirmadas; al editar se mantiene el estado actual
+    if (!esEdicion) {
+      datosReserva.estado = "confirmada";
+    }
+
     setGuardando(true);
+
     try {
-      await onCrearReserva(nuevaReserva);
-      limpiarFormulario();
-      onCerrar();
+      // Si todo sale bien, el padre cierra (desmonta) el modal
+      await onGuardar(datosReserva);
     } catch (error) {
-      setMensajeDisponibilidad({ disponible: false, mensaje: error.message });
-    } finally {
+      setMensajeDisponibilidad({
+        disponible: false,
+        mensaje: error.message,
+        errores: error.errores ?? [],
+      });
       setGuardando(false);
     }
-  }
-
-  function limpiarFormulario() {
-    setCliente("");
-    setClienteRut("");
-    setTelefono("");
-    setPersonas("2");
-    setFecha(fechaInicial);
-    setHora("");
-    setDuracion("60");
-    setMesa("");
-    setObservaciones("");
-
-    setMensajeDisponibilidad({
-      disponible: null,
-      mensaje: MENSAJE_INICIAL,
-    });
-  }
-
-  function manejarCerrar() {
-    limpiarFormulario();
-    onCerrar();
   }
 
   return (
     <div
       className="fondo-modal activo"
       onClick={(evento) => {
-        if (evento.target === evento.currentTarget) {
-          manejarCerrar();
+        if (evento.target === evento.currentTarget && !guardando) {
+          onCerrar();
         }
       }}
     >
-      <section className="modal-reserva">
+      <section
+        className="modal-reserva"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tituloModalReserva"
+      >
 
         <div className="encabezado-modal">
 
           <div className="titulo-modal">
 
             <div className="icono-modal">
-              <CalendarPlus />
+              {esEdicion ? <Pencil /> : <CalendarPlus />}
             </div>
 
             <div>
-              <h2>Nueva reserva</h2>
+              <h2 id="tituloModalReserva">
+                {esEdicion ? "Editar reserva" : "Nueva reserva"}
+              </h2>
 
               <p>
-                Registra los datos del cliente y
-                comprueba la disponibilidad.
+                {esEdicion
+                  ? "Modifica los datos y comprueba la disponibilidad."
+                  : "Registra los datos del cliente y comprueba la disponibilidad."}
               </p>
             </div>
 
@@ -171,7 +289,9 @@ export default function ModalReserva({
 
           <button
             type="button"
-            onClick={manejarCerrar}
+            onClick={onCerrar}
+            disabled={guardando}
+            aria-label="Cerrar"
           >
             <X />
           </button>
@@ -198,6 +318,7 @@ export default function ModalReserva({
               onChange={(evento) =>
                 setCliente(evento.target.value)
               }
+              minLength={2}
               required
             />
 
@@ -255,10 +376,9 @@ export default function ModalReserva({
             <select
               id="personasReserva"
               value={personas}
-              onChange={(evento) => {
-                setPersonas(evento.target.value);
-                setMesa("");
-              }}
+              onChange={(evento) =>
+                cambiarPersonas(evento.target.value)
+              }
             >
               {Array.from({ length: 12 }, (_, index) => index + 1).map((cantidad) => (
                 <option key={cantidad} value={cantidad}>
@@ -280,9 +400,9 @@ export default function ModalReserva({
               id="fechaReserva"
               type="date"
               value={fecha}
-              onChange={(evento) => {
-                setFecha(evento.target.value);
-              }}
+              onChange={(evento) =>
+                cambiarCampo(setFecha)(evento.target.value)
+              }
               required
             />
 
@@ -299,7 +419,7 @@ export default function ModalReserva({
               id="horaReserva"
               value={hora}
               onChange={(evento) =>
-                setHora(evento.target.value)
+                cambiarCampo(setHora)(evento.target.value)
               }
               required
             >
@@ -324,20 +444,14 @@ export default function ModalReserva({
               id="duracionReserva"
               value={duracion}
               onChange={(evento) =>
-                setDuracion(evento.target.value)
+                cambiarCampo(setDuracion)(evento.target.value)
               }
             >
-              <option value="60">
-                1 hora
-              </option>
-
-              <option value="90">
-                1 hora 30 minutos
-              </option>
-
-              <option value="120">
-                2 horas
-              </option>
+              {opcionesDuracion.map((opcion) => (
+                <option key={opcion.valor} value={opcion.valor}>
+                  {opcion.texto}
+                </option>
+              ))}
             </select>
 
           </div>
@@ -353,7 +467,7 @@ export default function ModalReserva({
               id="mesaReserva"
               value={mesa}
               onChange={(evento) =>
-                setMesa(evento.target.value)
+                cambiarCampo(setMesa)(evento.target.value)
               }
               required
             >
@@ -361,11 +475,21 @@ export default function ModalReserva({
               {mesasAptas.map((item) => (
                 <option key={item.id} value={item.id}>
                   Mesa {item.numero} - {item.zona} - {item.capacidad} personas
+                  {item.estado === "fuera" ? " (fuera de servicio)" : ""}
                 </option>
               ))}
             </select>
 
           </div>
+
+          {/* El estado de la mesa es en tiempo real: no impide reservar otro horario */}
+          {estadoMesaAhora && (
+            <p className="aviso-mesa-ahora campo-completo">
+              <Info />
+              La mesa {mesa} está {estadoMesaAhora} en este momento.
+              Puedes reservarla igual si el horario elegido está libre.
+            </p>
+          )}
 
           <div className="grupo-formulario campo-completo">
 
@@ -377,6 +501,7 @@ export default function ModalReserva({
             <textarea
               id="observacionesReserva"
               rows="3"
+              maxLength={300}
               placeholder="Ej: mesa cerca de la ventana"
               value={observaciones}
               onChange={(evento) =>
@@ -399,17 +524,28 @@ export default function ModalReserva({
                     : ""
               )
             }
+            role="status"
           >
             <span>
               {mensajeDisponibilidad.mensaje}
             </span>
+
+            {/* Detalle de los errores de validación del backend */}
+            {mensajeDisponibilidad.errores?.length > 0 && (
+              <ul className="lista-errores-reserva">
+                {mensajeDisponibilidad.errores.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="acciones-modal campo-completo">
 
             <button
               type="button"
-              onClick={manejarCerrar}
+              onClick={onCerrar}
+              disabled={guardando}
             >
               Cancelar
             </button>
@@ -418,18 +554,25 @@ export default function ModalReserva({
               type="button"
               className="boton-cambiar-mesa"
               onClick={comprobarDisponibilidad}
+              disabled={enviando}
             >
-              Comprobar disponibilidad
+              {comprobando && !guardando
+                ? "Comprobando..."
+                : "Comprobar disponibilidad"}
             </button>
 
             <button
               type="submit"
               className="boton-confirmar-reserva"
-              disabled={guardando}
+              disabled={enviando}
             >
               <HeartHandshake />
 
-              Confirmar reserva
+              {guardando
+                ? "Guardando..."
+                : esEdicion
+                  ? "Guardar cambios"
+                  : "Confirmar reserva"}
             </button>
 
           </div>

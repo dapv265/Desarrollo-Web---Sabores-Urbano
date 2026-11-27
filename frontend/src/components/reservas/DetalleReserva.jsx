@@ -1,17 +1,55 @@
+import { useEffect, useRef, useState } from "react";
+
 import {
   Armchair,
   CalendarDays,
   Clock3,
+  IdCard,
+  MessageSquareText,
+  Pencil,
   Phone,
+  Trash2,
   UsersRound,
   X,
 } from "lucide-react";
 
+import { estadosReserva } from "../../data/reservasData";
+import { textoEstado } from "../../utils/reservasUtils";
+
+// `accionEnCurso`: null, "eliminar" o "estado-<valor>" mientras se envía al backend.
+// El padre le pone key={reserva._id} para que la confirmación se reinicie al cambiar de reserva.
 export default function DetalleReserva({
   reserva,
+  accionEnCurso,
   onCerrar,
   onCambiarEstado,
+  onEditar,
+  onEliminar,
 }) {
+  const [confirmandoEliminar, setConfirmandoEliminar] =
+    useState(false);
+
+  const refPanel = useRef(null);
+  const hayReserva = Boolean(reserva);
+
+  // El panel está bajo el calendario: si al elegir una reserva
+  // no se ve completo, la página se desplaza suavemente hasta él
+  useEffect(() => {
+    const panel = refPanel.current;
+
+    if (!hayReserva || !panel) return;
+
+    const rect = panel.getBoundingClientRect();
+
+    if (rect.bottom > window.innerHeight) {
+      panel.scrollIntoView({
+        behavior: "smooth",
+        // Si cabe entero, solo lo justo para verlo completo; si no, desde arriba
+        block: rect.height < window.innerHeight ? "nearest" : "start",
+      });
+    }
+  }, [hayReserva]);
+
   if (!reserva) {
     return (
       <aside className="detalle-reserva">
@@ -31,8 +69,10 @@ export default function DetalleReserva({
     );
   }
 
+  const ocupado = accionEnCurso !== null;
+
   return (
-    <aside className="detalle-reserva">
+    <aside className="detalle-reserva" ref={refPanel}>
 
       <div className="encabezado-detalle">
 
@@ -42,6 +82,7 @@ export default function DetalleReserva({
           type="button"
           className="cerrar-detalle"
           onClick={onCerrar}
+          aria-label="Cerrar detalle"
         >
           <X />
         </button>
@@ -51,7 +92,7 @@ export default function DetalleReserva({
       <div
         className={`estado-reserva ${reserva.estado}`}
       >
-        {reserva.estado}
+        {textoEstado(reserva.estado)}
       </div>
 
       <div className="contenido-detalle">
@@ -59,6 +100,7 @@ export default function DetalleReserva({
         <div className="avatar-cliente">
           {reserva.cliente
             .split(" ")
+            .filter(Boolean)
             .map((palabra) => palabra[0])
             .slice(0, 2)
             .join("")}
@@ -80,7 +122,7 @@ export default function DetalleReserva({
 
         <p>
           <UsersRound />
-          {reserva.personas} personas
+          {reserva.personas} {reserva.personas === 1 ? "persona" : "personas"}
         </p>
 
         <p>
@@ -95,30 +137,107 @@ export default function DetalleReserva({
 
         {reserva.clienteRut && (
           <p>
+            <IdCard />
             RUT {reserva.clienteRut}
           </p>
         )}
 
-        {reserva.estado !== "cancelada" && (
-          <div className="flex gap-2 mt-4">
-            {reserva.estado !== "confirmada" && (
+        {reserva.observaciones && (
+          <p>
+            <MessageSquareText />
+            {reserva.observaciones}
+          </p>
+        )}
+
+      </div>
+
+      {/* Cambiar entre los 4 estados */}
+      <div className="cambiar-estado-reserva">
+
+        <h3>Cambiar estado</h3>
+
+        <div className="opciones-estado">
+          {estadosReserva.map(({ valor, texto }) => {
+            const enviando = accionEnCurso === `estado-${valor}`;
+
+            return (
+              <button
+                key={valor}
+                type="button"
+                className={
+                  `opcion-estado ${valor}` +
+                  (reserva.estado === valor ? " actual" : "")
+                }
+                aria-pressed={reserva.estado === valor}
+                disabled={ocupado || reserva.estado === valor}
+                onClick={() => onCambiarEstado(reserva, valor)}
+              >
+                <span className={`punto-estado ${valor}`} />
+                {enviando ? "Guardando..." : texto}
+              </button>
+            );
+          })}
+        </div>
+
+      </div>
+
+      <div className="acciones-detalle">
+
+        {confirmandoEliminar ? (
+
+          <div className="confirmar-eliminar" role="alertdialog" aria-labelledby="textoConfirmarEliminar">
+
+            <p id="textoConfirmarEliminar">
+              ¿Eliminar la reserva de {reserva.cliente}?
+            </p>
+
+            <div className="botones-confirmar-eliminar">
               <button
                 type="button"
-                className="boton-confirmar-reserva"
-                onClick={() => onCambiarEstado(reserva, "confirmada")}
+                className="boton-cambiar-mesa"
+                onClick={() => setConfirmandoEliminar(false)}
+                disabled={ocupado}
               >
-                Confirmar
+                Cancelar
               </button>
-            )}
+
+              <button
+                type="button"
+                className="boton-cancelar-reserva"
+                onClick={() => onEliminar(reserva)}
+                disabled={ocupado}
+              >
+                <Trash2 />
+                {accionEnCurso === "eliminar" ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+
+          </div>
+
+        ) : (
+
+          <>
+            <button
+              type="button"
+              className="boton-editar-reserva"
+              onClick={() => onEditar(reserva)}
+              disabled={ocupado}
+            >
+              <Pencil />
+              Editar
+            </button>
 
             <button
               type="button"
-              className="boton-cambiar-mesa"
-              onClick={() => onCambiarEstado(reserva, "cancelada")}
+              className="boton-cancelar-reserva"
+              onClick={() => setConfirmandoEliminar(true)}
+              disabled={ocupado}
             >
-              Cancelar reserva
+              <Trash2 />
+              Eliminar
             </button>
-          </div>
+          </>
+
         )}
 
       </div>
