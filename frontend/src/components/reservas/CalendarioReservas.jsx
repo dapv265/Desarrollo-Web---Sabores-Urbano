@@ -34,6 +34,7 @@ export default function CalendarioReservas({
   vista,
   onCambiarVista,
   onNuevaReserva,
+  puedeGestionar,
   reservaSeleccionada,
   onSeleccionarReserva,
 }) {
@@ -183,14 +184,17 @@ export default function CalendarioReservas({
 
           </div>
 
-          <button
-            type="button"
-            className="boton-nueva-reserva"
-            onClick={() => onNuevaReserva()}
-          >
-            <CalendarPlus />
-            Nueva reserva
-          </button>
+          {/* Solo administradores pueden crear reservas */}
+          {puedeGestionar && (
+            <button
+              type="button"
+              className="boton-nueva-reserva"
+              onClick={() => onNuevaReserva()}
+            >
+              <CalendarPlus />
+              Nueva reserva
+            </button>
+          )}
 
         </div>
 
@@ -293,24 +297,27 @@ export default function CalendarioReservas({
                           );
                         }
 
-                        // Celda libre: abre el modal con mesa y hora elegidas
+                        // Celda libre: para administradores abre el modal con mesa y hora;
+                        // en modo lectura queda vacía (sin "+")
                         return (
                           <td
                             key={mesa.id}
                             className="celda-reserva sin-reserva"
                             {...atributosMovil}
                           >
-                            <button
-                              type="button"
-                              className="boton-celda-vacia"
-                              onClick={() =>
-                                onNuevaReserva({ mesa: mesa.id, hora })
-                              }
-                              aria-label={`Nueva reserva en mesa ${mesa.id} a las ${hora}`}
-                              title={`Reservar mesa ${mesa.id} a las ${hora}`}
-                            >
-                              <Plus />
-                            </button>
+                            {puedeGestionar && (
+                              <button
+                                type="button"
+                                className="boton-celda-vacia"
+                                onClick={() =>
+                                  onNuevaReserva({ mesa: mesa.id, hora })
+                                }
+                                aria-label={`Nueva reserva en mesa ${mesa.id} a las ${hora}`}
+                                title={`Reservar mesa ${mesa.id} a las ${hora}`}
+                              >
+                                <Plus />
+                              </button>
+                            )}
                           </td>
                         );
                       })}

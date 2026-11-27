@@ -17,10 +17,12 @@ import { estadosReserva } from "../../data/reservasData";
 import { textoEstado } from "../../utils/reservasUtils";
 
 // `accionEnCurso`: null, "eliminar" o "estado-<valor>" mientras se envía al backend.
+// `puedeGestionar`: sin rol de administrador solo se ven los datos (sin estado, editar ni eliminar).
 // El padre le pone key={reserva._id} para que la confirmación se reinicie al cambiar de reserva.
 export default function DetalleReserva({
   reserva,
   accionEnCurso,
+  puedeGestionar,
   onCerrar,
   onCambiarEstado,
   onEditar,
@@ -52,7 +54,7 @@ export default function DetalleReserva({
 
   if (!reserva) {
     return (
-      <aside className="detalle-reserva">
+      <aside className="detalle-reserva vacio">
 
         <div className="encabezado-detalle">
           <h2>Detalle de reserva</h2>
@@ -72,7 +74,10 @@ export default function DetalleReserva({
   const ocupado = accionEnCurso !== null;
 
   return (
-    <aside className="detalle-reserva" ref={refPanel}>
+    <aside
+      className={puedeGestionar ? "detalle-reserva" : "detalle-reserva solo-lectura"}
+      ref={refPanel}
+    >
 
       <div className="encabezado-detalle">
 
@@ -151,6 +156,9 @@ export default function DetalleReserva({
 
       </div>
 
+      {/* Controles solo para administradores */}
+      {puedeGestionar && (
+      <>
       {/* Cambiar entre los 4 estados */}
       <div className="cambiar-estado-reserva">
 
@@ -241,6 +249,8 @@ export default function DetalleReserva({
         )}
 
       </div>
+      </>
+      )}
 
     </aside>
   );

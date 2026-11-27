@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   CircleAlert,
   CircleCheck,
+  LockKeyhole,
   X,
 } from "lucide-react";
+
+import { useAuth } from "../auth/useAuth";
+import { ROLES } from "../auth/roles";
 
 import HeaderReservas
   from "../components/reservas/HeaderReservas";
@@ -57,8 +62,26 @@ const FILTROS_ESTADO_INICIALES = {
 // Tiempo que se muestra el aviso de éxito o error
 const DURACION_AVISO = 4000;
 
+// Solo estos roles crean, editan, cambian estado o eliminan (igual que el backend)
+const ROLES_GESTION_RESERVAS = [ROLES.ADMIN_GENERAL, ROLES.ADMIN_LOCAL];
+
+// Texto del error según el código HTTP de una escritura
+function mensajeDeError(error) {
+  if (error.status === 401) return "Tu sesión expiró, vuelve a iniciar sesión";
+  if (error.status === 403) return "No tienes permisos para modificar reservas";
+  return error.message;
+}
+
 
 export default function ReservasPage() {
+
+  // =========================================================
+  // SESIÓN: ver el calendario es público; modificar, solo administradores
+  // =========================================================
+
+  const { session } = useAuth();
+  const token = session?.token;
+  const puedeGestionar = ROLES_GESTION_RESERVAS.includes(session?.usuario?.rol);
 
   // =========================================================
   // DATOS DEL BACKEND
@@ -293,6 +316,8 @@ export default function ReservasPage() {
   // `valores` opcional: { mesa, hora } al hacer clic en una celda vacía
   function abrirNuevaReserva(valores = {}) {
 
+    if (!puedeGestionar) return;
+
     // Se recargan las mesas para tener su estado actual
     cargarMesas();
     setModal({ valores: { fecha: fechaSeleccionada, ...valores } });
@@ -300,6 +325,8 @@ export default function ReservasPage() {
   }
 
   function abrirEdicion(reserva) {
+
+    if (!puedeGestionar) return;
 
     cargarMesas();
     setModal({ reserva });
@@ -317,14 +344,20 @@ export default function ReservasPage() {
 
   async function guardarReserva(datosReserva) {
 
-    if (modal.reserva) {
-      const actualizada = await actualizarReserva(modal.reserva._id, datosReserva);
-      setReservaSeleccionada(actualizada);
-      mostrarAviso("exito", "Reserva actualizada correctamente");
-    } else {
-      const creada = await crearReservaApi(datosReserva);
-      setReservaSeleccionada(creada);
-      mostrarAviso("exito", "Reserva creada correctamente");
+    try {
+      if (modal.reserva) {
+        const actualizada = await actualizarReserva(modal.reserva._id, datosReserva, token);
+        setReservaSeleccionada(actualizada);
+        mostrarAviso("exito", "Reserva actualizada correctamente");
+      } else {
+        const creada = await crearReservaApi(datosReserva, token);
+        setReservaSeleccionada(creada);
+        mostrarAviso("exito", "Reserva creada correctamente");
+      }
+    } catch (err) {
+      // El modal muestra el mensaje (401 y 403 con texto propio)
+      err.message = mensajeDeError(err);
+      throw err;
     }
 
     setModal(null);
@@ -350,12 +383,12 @@ export default function ReservasPage() {
     setAccionEnCurso(`estado-${estado}`);
 
     try {
-      const actualizada = await cambiarEstadoReserva(reserva._id, estado);
+      const actualizada = await cambiarEstadoReserva(reserva._id, estado, token);
       setReservaSeleccionada(actualizada);
       mostrarAviso("exito", `Reserva marcada como ${textoEstado(estado).toLowerCase()}`);
     } catch (err) {
       // Ej: 409 al reactivar una cancelada cuyo horario ya se ocupó
-      mostrarAviso("error", err.message);
+      mostrarAviso("error", mensajeDeError(err));
     } finally {
       setAccionEnCurso(null);
       recargarReservas();
@@ -373,11 +406,11 @@ export default function ReservasPage() {
     setAccionEnCurso("eliminar");
 
     try {
-      await eliminarReserva(reserva._id);
+      await eliminarReserva(reserva._id, token);
       setReservaSeleccionada(null);
       mostrarAviso("exito", "Reserva eliminada correctamente");
     } catch (err) {
-      mostrarAviso("error", err.message);
+      mostrarAviso("error", mensajeDeError(err));
     } finally {
       setAccionEnCurso(null);
       recargarReservas();
@@ -448,6 +481,18 @@ export default function ReservasPage() {
         =================================================== */}
 
         <HeaderReservas />
+
+
+        {/* Aviso discreto de solo lectura (sin sesión o sin rol de administrador) */}
+        {!puedeGestionar && (
+          <p className="aviso-lectura-reservas">
+            <LockKeyhole aria-hidden="true" />
+            <span>
+              Inicia sesión como administrador para crear o modificar reservas
+            </span>
+            {!session && <Link to="/login">Iniciar sesión</Link>}
+          </p>
+        )}
 
 
         {/* ===================================================
@@ -541,6 +586,10 @@ export default function ReservasPage() {
             abrirNuevaReserva
           }
 
+          puedeGestionar={
+            puedeGestionar
+          }
+
           reservaSeleccionada={
             reservaSeleccionada
           }
@@ -570,6 +619,10 @@ export default function ReservasPage() {
             accionEnCurso
           }
 
+          puedeGestionar={
+            puedeGestionar
+          }
+
           onCerrar={() =>
             setReservaSeleccionada(null)
           }
@@ -597,7 +650,7 @@ export default function ReservasPage() {
       ===================================================== */}
 
       {/* Se monta al abrirse para que parta con los datos correctos */}
-      {modal && (
+      {modal && puedeGestionar && (
       <ModalReserva
 
         mesas={

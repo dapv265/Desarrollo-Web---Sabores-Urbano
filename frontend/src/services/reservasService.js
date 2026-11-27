@@ -3,9 +3,10 @@
 import { API_BASE_URL } from "./api";
 
 // Error con los datos que devuelve la API de reservas:
-// { mensaje, errores: [...], conflicto } y el código HTTP en `status`
+// { mensaje, errores: [...], conflicto } y el código HTTP en `status`.
+// Los errores de sesión (401/403) llegan como { message }.
 function crearErrorReserva(datos, status, mensajePorDefecto) {
-  const error = new Error(datos?.mensaje || mensajePorDefecto);
+  const error = new Error(datos?.mensaje || datos?.message || mensajePorDefecto);
 
   error.status = status;
   error.errores = Array.isArray(datos?.errores) ? datos.errores : [];
@@ -15,13 +16,19 @@ function crearErrorReserva(datos, status, mensajePorDefecto) {
 }
 
 // Hace la petición y devuelve el JSON, o lanza un error con los datos del backend
-async function solicitar(ruta, { method = "GET", body } = {}, mensajePorDefecto) {
+// `token` (opcional) se envía como Authorization: Bearer en las escrituras
+async function solicitar(ruta, { method = "GET", body, token } = {}, mensajePorDefecto) {
+  const headers = {};
+
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   let respuesta;
 
   try {
     respuesta = await fetch(`${API_BASE_URL}${ruta}`, {
       method,
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
@@ -90,10 +97,11 @@ export function comprobarDisponibilidadReserva({ fecha, inicio, duracion, mesa, 
   );
 }
 
-export async function crearReserva(reserva) {
+// Crear, editar, cambiar estado y eliminar requieren rol de administrador (token)
+export async function crearReserva(reserva, token) {
   const datos = await solicitar(
     "/reservas",
-    { method: "POST", body: reserva },
+    { method: "POST", body: reserva, token },
     "No se pudo crear la reserva."
   );
 
@@ -101,30 +109,30 @@ export async function crearReserva(reserva) {
 }
 
 // Editar una reserva (PUT, acepta duracion en minutos)
-export async function actualizarReserva(id, reserva) {
+export async function actualizarReserva(id, reserva, token) {
   const datos = await solicitar(
     `/reservas/${encodeURIComponent(id)}`,
-    { method: "PUT", body: reserva },
+    { method: "PUT", body: reserva, token },
     "No se pudo actualizar la reserva."
   );
 
   return datos.reserva;
 }
 
-export async function cambiarEstadoReserva(id, estado) {
+export async function cambiarEstadoReserva(id, estado, token) {
   const datos = await solicitar(
     `/reservas/${encodeURIComponent(id)}/estado`,
-    { method: "PATCH", body: { estado } },
+    { method: "PATCH", body: { estado }, token },
     "No se pudo cambiar el estado de la reserva."
   );
 
   return datos.reserva;
 }
 
-export async function eliminarReserva(id) {
+export async function eliminarReserva(id, token) {
   const datos = await solicitar(
     `/reservas/${encodeURIComponent(id)}`,
-    { method: "DELETE" },
+    { method: "DELETE", token },
     "No se pudo eliminar la reserva."
   );
 
