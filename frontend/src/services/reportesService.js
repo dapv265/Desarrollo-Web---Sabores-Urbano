@@ -47,6 +47,17 @@ export function actualizarReporte(id, reporte, token) {
   });
 }
 
+export function generarReportesDesdePedidos({ periodo, restaurante, token } = {}) {
+  return apiRequest("/reportes/generar", {
+    method: "POST",
+    token,
+    body: {
+      ...(periodo && periodo !== "Todos" ? { periodo } : {}),
+      ...(restaurante && restaurante !== "Todos" ? { restaurante } : {}),
+    },
+  });
+}
+
 export function eliminarReporte(id, token) {
   return apiRequest(`/reportes/${encodeURIComponent(id)}`, {
     method: "DELETE",

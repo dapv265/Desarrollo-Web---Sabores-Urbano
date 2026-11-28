@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   cambiarEstadoUsuario,
+  eliminarUsuario,
   listarUsuarios,
   login,
   perfil,
@@ -41,6 +42,12 @@ router.patch(
   authenticate,
   authorizeRoles(ROLES.ADMIN_GENERAL),
   cambiarEstadoUsuario,
+);
+router.delete(
+  '/usuarios/:id',
+  authenticate,
+  authorizeRoles(ROLES.ADMIN_GENERAL),
+  eliminarUsuario,
 );
 
 export default router;

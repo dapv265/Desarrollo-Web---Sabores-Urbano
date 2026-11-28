@@ -128,7 +128,7 @@ export const USUARIOS_SEED = [
     email: 'cocina@saboresurbanos.dev',
     password: DEVELOPMENT_PASSWORD,
     rol: ROLES.COCINA,
-    codigoRestaurante: 'LOC-02',
+    codigoRestaurante: 'LOC-01',
     activo: true,
   },
 ];

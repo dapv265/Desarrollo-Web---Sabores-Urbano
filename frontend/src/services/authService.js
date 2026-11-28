@@ -30,3 +30,10 @@ export function cambiarEstadoUsuario(id, activo, token) {
     body: { activo },
   });
 }
+
+export function eliminarUsuario(id, token) {
+  return apiRequest(`/auth/usuarios/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    token,
+  });
+}

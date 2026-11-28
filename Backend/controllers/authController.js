@@ -154,3 +154,35 @@ export async function cambiarEstadoUsuario(req, res) {
     data: { usuario: usuarioPublico(usuario) },
   });
 }
+
+export async function eliminarUsuario(req, res) {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'El identificador de usuario no es válido.',
+    });
+  }
+
+  if (String(req.user._id) === String(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'No puedes eliminar tu propia cuenta de Administrador General.',
+    });
+  }
+
+  const usuario = await Usuario.findByIdAndDelete(id);
+
+  if (!usuario) {
+    return res.status(404).json({
+      success: false,
+      message: 'Usuario no encontrado.',
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: { id: usuario._id },
+  });
+}

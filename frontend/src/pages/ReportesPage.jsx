@@ -1,15 +1,36 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Calculator, Plus, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { ROLES } from '../auth/roles';
 import { obtenerRestaurantes } from '../services/restaurantesService';
-import { obtenerResumenReportes } from '../services/reportesService';
+import {
+  crearReporte,
+  eliminarReporte,
+  generarReportesDesdePedidos,
+  obtenerResumenReportes,
+} from '../services/reportesService';
 
-const PERIODOS_DISPONIBLES = [
+const PERIODOS_BASE = [
   { valor: 'Todos', etiqueta: 'Todos los períodos' },
   { valor: '2026-10', etiqueta: 'Octubre 2026 (2026-10)' },
   { valor: '2026-11', etiqueta: 'Noviembre 2026 (2026-11)' },
   { valor: '2026-12', etiqueta: 'Diciembre 2026 (2026-12)' },
 ];
+
+const CATEGORIAS_PLATO = [
+  'Entradas',
+  'Fondos',
+  'Postres',
+  'Bebidas',
+  'Promociones',
+];
+
+const PLATO_VACIO = {
+  nombre: '',
+  categoria: 'Fondos',
+  cantidad: '',
+  totalRecaudado: '',
+};
 
 function formatearMonedaCLP(monto) {
   return new Intl.NumberFormat('es-CL', {
@@ -36,18 +57,18 @@ export default function ReportesPage() {
   const usuario = session?.usuario;
   const esAdminLocal =
     usuario?.rol === ROLES.ADMIN_LOCAL && Boolean(usuario?.restaurante);
+  const restauranteAsignado = esAdminLocal ? String(usuario.restaurante) : '';
 
-  const [periodo, setPeriodo] = useState('2026-10');
-  const [restauranteFiltro, setRestauranteFiltro] = useState(
-    esAdminLocal ? String(usuario.restaurante) : 'Todos',
-  );
+  const [periodo, setPeriodo] = useState('Todos');
+  const [periodosExtra, setPeriodosExtra] = useState([]);
+  const [restauranteSeleccionado, setRestauranteSeleccionado] = useState('Todos');
   const [restaurantes, setRestaurantes] = useState([]);
+  const [version, setVersion] = useState(0);
 
-  useEffect(() => {
-    if (esAdminLocal) {
-      setRestauranteFiltro(String(usuario.restaurante));
-    }
-  }, [esAdminLocal, usuario?.restaurante]);
+  const restauranteFiltro = esAdminLocal
+    ? restauranteAsignado
+    : restauranteSeleccionado;
+
   const [resumen, setResumen] = useState({
     periodo: '2026-10',
     kpis: {
@@ -62,6 +83,28 @@ export default function ReportesPage() {
   });
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
+
+  // Estado del formulario para subir un reporte
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [formulario, setFormulario] = useState({
+    periodo: '2026-11',
+    restaurante: restauranteAsignado,
+    pedidosTotales: '',
+    ventasTotales: '',
+    tasaOcupacion: '',
+    observaciones: '',
+    platosMasVendidos: [{ ...PLATO_VACIO }],
+  });
+
+  const periodosDisponibles = useMemo(() => {
+    const existentes = new Set(PERIODOS_BASE.map((p) => p.valor));
+    const extras = periodosExtra
+      .filter((p) => !existentes.has(p))
+      .map((p) => ({ valor: p, etiqueta: p }));
+    return [...PERIODOS_BASE, ...extras];
+  }, [periodosExtra]);
 
   useEffect(() => {
     let cancelado = false;
@@ -81,30 +124,201 @@ export default function ReportesPage() {
     };
   }, [token]);
 
-  const cargarResumen = useCallback(async () => {
-    setCargando(true);
+  useEffect(() => {
+    let cancelado = false;
+
+    obtenerResumenReportes({
+      periodo,
+      restaurante: restauranteFiltro,
+      token,
+    })
+      .then((data) => {
+        if (!cancelado && data) {
+          setResumen(data);
+          setError('');
+        }
+      })
+      .catch((err) => {
+        if (!cancelado) {
+          setError(formatearError(err));
+        }
+      })
+      .finally(() => {
+        if (!cancelado) {
+          setCargando(false);
+        }
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [periodo, restauranteFiltro, token, version]);
+
+  const abrirFormulario = () => {
     setError('');
+    setMensaje('');
+    setFormulario((prev) => ({
+      ...prev,
+      restaurante: esAdminLocal
+        ? restauranteAsignado
+        : prev.restaurante || restaurantes[0]?._id || '',
+    }));
+    setMostrarFormulario((abierto) => !abierto);
+  };
+
+  const cambiarCampoFormulario = (campo, valor) => {
+    setFormulario((prev) => ({ ...prev, [campo]: valor }));
+  };
+
+  const cambiarPlato = (indice, campo, valor) => {
+    setFormulario((prev) => ({
+      ...prev,
+      platosMasVendidos: prev.platosMasVendidos.map((plato, idx) =>
+        idx === indice ? { ...plato, [campo]: valor } : plato,
+      ),
+    }));
+  };
+
+  const agregarFilaPlato = () => {
+    setFormulario((prev) => ({
+      ...prev,
+      platosMasVendidos: [...prev.platosMasVendidos, { ...PLATO_VACIO }],
+    }));
+  };
+
+  const quitarFilaPlato = (indice) => {
+    setFormulario((prev) => ({
+      ...prev,
+      platosMasVendidos: prev.platosMasVendidos.filter((_, idx) => idx !== indice),
+    }));
+  };
+
+  const handleSubirReporte = async (event) => {
+    event.preventDefault();
+    if (guardando) return;
+
+    setError('');
+    setMensaje('');
+
+    const restauranteId = esAdminLocal
+      ? restauranteAsignado
+      : formulario.restaurante;
+
+    if (!restauranteId) {
+      setError('Selecciona un restaurante para subir el reporte.');
+      return;
+    }
+
+    const platosValidos = formulario.platosMasVendidos
+      .filter((p) => p.nombre.trim() !== '')
+      .map((p) => ({
+        nombre: p.nombre.trim(),
+        categoria: p.categoria.trim() || 'Fondos',
+        cantidad: Number(p.cantidad),
+        totalRecaudado: Number(p.totalRecaudado),
+      }));
+
+    const payload = {
+      periodo: formulario.periodo.trim(),
+      restaurante: restauranteId,
+      pedidosTotales: Number(formulario.pedidosTotales),
+      ventasTotales: Number(formulario.ventasTotales),
+      tasaOcupacion: Number(formulario.tasaOcupacion),
+      platosMasVendidos: platosValidos,
+      observaciones: formulario.observaciones.trim(),
+    };
 
     try {
-      const data = await obtenerResumenReportes({
-        periodo,
+      setGuardando(true);
+      await crearReporte(payload, token);
+
+      const periodoCreado = payload.periodo;
+      setPeriodosExtra((prev) =>
+        prev.includes(periodoCreado) ? prev : [...prev, periodoCreado],
+      );
+      setPeriodo(periodoCreado);
+      setCargando(true);
+      setVersion((v) => v + 1);
+      setMostrarFormulario(false);
+      setFormulario({
+        periodo: periodoCreado,
+        restaurante: restauranteAsignado,
+        pedidosTotales: '',
+        ventasTotales: '',
+        tasaOcupacion: '',
+        observaciones: '',
+        platosMasVendidos: [{ ...PLATO_VACIO }],
+      });
+      setMensaje(`Reporte del período ${periodoCreado} subido correctamente.`);
+    } catch (err) {
+      setError(formatearError(err));
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleGenerarDesdePedidos = async () => {
+    if (guardando) return;
+    setError('');
+    setMensaje('');
+
+    const ahora = new Date();
+    const periodoObjetivo =
+      periodo && periodo !== 'Todos'
+        ? periodo
+        : `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+
+    try {
+      setGuardando(true);
+      const resultado = await generarReportesDesdePedidos({
+        periodo: periodoObjetivo,
         restaurante: restauranteFiltro,
         token,
       });
 
-      if (data) {
-        setResumen(data);
-      }
+      const periodoCalculado = resultado?.periodo || periodoObjetivo;
+      setPeriodosExtra((prev) =>
+        prev.includes(periodoCalculado) ? prev : [...prev, periodoCalculado],
+      );
+      setPeriodo(periodoCalculado);
+      setCargando(true);
+      setVersion((v) => v + 1);
+      setMensaje(
+        `Reporte(s) del período ${periodoCalculado} calculados automáticamente desde ${resultado?.totalPedidosAnalizados ?? 0} pedido(s) reales.`,
+      );
     } catch (err) {
       setError(formatearError(err));
     } finally {
-      setCargando(false);
+      setGuardando(false);
     }
-  }, [periodo, restauranteFiltro, token]);
+  };
 
-  useEffect(() => {
-    cargarResumen();
-  }, [cargarResumen]);
+  const handleEliminarReporte = async (item) => {
+    if (!item.reporteId || guardando) return;
+    const nombreLocal = item.restaurante?.nombre || 'esta sucursal';
+    if (
+      !window.confirm(
+        `¿Seguro que deseas eliminar el reporte de ${nombreLocal} (${item.periodo})?`,
+      )
+    ) {
+      return;
+    }
+
+    setError('');
+    setMensaje('');
+
+    try {
+      setGuardando(true);
+      await eliminarReporte(item.reporteId, token);
+      setCargando(true);
+      setVersion((v) => v + 1);
+      setMensaje('Reporte eliminado correctamente.');
+    } catch (err) {
+      setError(formatearError(err));
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   const { kpis, ventasPorLocal, topPlatos } = resumen;
 
@@ -125,7 +339,10 @@ export default function ReportesPage() {
             aria-label="Filtrar por restaurante"
             value={restauranteFiltro}
             disabled={esAdminLocal}
-            onChange={(e) => setRestauranteFiltro(e.target.value)}
+            onChange={(e) => {
+              setCargando(true);
+              setRestauranteSeleccionado(e.target.value);
+            }}
             className="p-2 border border-gray-300 rounded-lg text-sm bg-white font-semibold text-[#123C39] disabled:opacity-70"
           >
             {!esAdminLocal && (
@@ -141,15 +358,37 @@ export default function ReportesPage() {
           <select
             aria-label="Filtrar por período"
             value={periodo}
-            onChange={(e) => setPeriodo(e.target.value)}
+            onChange={(e) => {
+              setCargando(true);
+              setPeriodo(e.target.value);
+            }}
             className="p-2 border border-gray-300 rounded-lg text-sm bg-white font-semibold text-[#123C39]"
           >
-            {PERIODOS_DISPONIBLES.map((item) => (
+            {periodosDisponibles.map((item) => (
               <option key={item.valor} value={item.valor}>
                 {item.etiqueta}
               </option>
             ))}
           </select>
+
+          <button
+            type="button"
+            disabled={guardando}
+            onClick={handleGenerarDesdePedidos}
+            className="btn-secondary inline-flex items-center gap-2 text-sm disabled:opacity-50"
+          >
+            <Calculator className="h-4 w-4" />
+            {guardando ? 'Calculando...' : 'Generar desde pedidos'}
+          </button>
+
+          <button
+            type="button"
+            onClick={abrirFormulario}
+            className="btn-primary inline-flex items-center gap-2 text-sm"
+          >
+            <Upload className="h-4 w-4" />
+            {mostrarFormulario ? 'Cerrar formulario' : 'Subir reporte'}
+          </button>
         </div>
       </div>
 
@@ -160,6 +399,224 @@ export default function ReportesPage() {
         >
           {error}
         </div>
+      )}
+
+      {mensaje && (
+        <div
+          className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
+          role="status"
+        >
+          {mensaje}
+        </div>
+      )}
+
+      {mostrarFormulario && (
+        <form onSubmit={handleSubirReporte} className="card space-y-5 bg-white">
+          <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
+            <div>
+              <h2 className="text-lg font-bold text-[#123C39]">
+                Subir nuevo reporte mensual
+              </h2>
+              <p className="text-xs text-gray-500">
+                Registra los indicadores de un período (AAAA-MM) para una sucursal. Solo puede existir un reporte por sucursal y período.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Restaurante / Sucursal
+              <select
+                value={esAdminLocal ? restauranteAsignado : formulario.restaurante}
+                disabled={esAdminLocal}
+                onChange={(e) => cambiarCampoFormulario('restaurante', e.target.value)}
+                required
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm disabled:opacity-70"
+              >
+                <option value="">Selecciona una sucursal...</option>
+                {restaurantes.map((local) => (
+                  <option key={local._id} value={local._id}>
+                    {local.codigo} - {local.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Período (AAAA-MM)
+              <input
+                type="month"
+                value={formulario.periodo}
+                onChange={(e) => cambiarCampoFormulario('periodo', e.target.value)}
+                required
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Pedidos totales
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                placeholder="Ej: 450"
+                value={formulario.pedidosTotales}
+                onChange={(e) =>
+                  cambiarCampoFormulario('pedidosTotales', e.target.value)
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Ventas totales (CLP)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                placeholder="Ej: 6500000"
+                value={formulario.ventasTotales}
+                onChange={(e) =>
+                  cambiarCampoFormulario('ventasTotales', e.target.value)
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Tasa de ocupación (%)
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                required
+                placeholder="Ej: 78"
+                value={formulario.tasaOcupacion}
+                onChange={(e) =>
+                  cambiarCampoFormulario('tasaOcupacion', e.target.value)
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700 md:col-span-2 lg:col-span-1">
+              Observaciones (opcional)
+              <input
+                type="text"
+                maxLength={500}
+                placeholder="Notas del cierre del período..."
+                value={formulario.observaciones}
+                onChange={(e) =>
+                  cambiarCampoFormulario('observaciones', e.target.value)
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#123C39]">
+                Platos más vendidos (opcional)
+              </h3>
+              <button
+                type="button"
+                onClick={agregarFilaPlato}
+                className="inline-flex items-center gap-1 rounded-md border border-[#123C39] px-3 py-1 text-xs font-semibold text-[#123C39] hover:bg-[#123C39]/5"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Agregar plato
+              </button>
+            </div>
+
+            {formulario.platosMasVendidos.map((plato, indice) => (
+              <div
+                key={indice}
+                className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 md:grid-cols-12"
+              >
+                <input
+                  type="text"
+                  placeholder="Nombre del plato (ej: Lomo a lo Pobre)"
+                  value={plato.nombre}
+                  onChange={(e) => cambiarPlato(indice, 'nombre', e.target.value)}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm md:col-span-4"
+                />
+
+                <select
+                  value={plato.categoria}
+                  onChange={(e) =>
+                    cambiarPlato(indice, 'categoria', e.target.value)
+                  }
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm md:col-span-3"
+                >
+                  {CATEGORIAS_PLATO.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Cantidad"
+                  required={plato.nombre.trim() !== ''}
+                  value={plato.cantidad}
+                  onChange={(e) =>
+                    cambiarPlato(indice, 'cantidad', e.target.value)
+                  }
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm md:col-span-2"
+                />
+
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="Recaudado CLP"
+                  required={plato.nombre.trim() !== ''}
+                  value={plato.totalRecaudado}
+                  onChange={(e) =>
+                    cambiarPlato(indice, 'totalRecaudado', e.target.value)
+                  }
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm md:col-span-2"
+                />
+
+                <div className="flex items-center justify-end md:col-span-1">
+                  <button
+                    type="button"
+                    onClick={() => quitarFilaPlato(indice)}
+                    aria-label="Quitar plato"
+                    className="rounded-md border border-red-200 p-2 text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setMostrarFormulario(false)}
+              disabled={guardando}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={guardando}
+              className="btn-primary text-sm disabled:opacity-50"
+            >
+              {guardando ? 'Guardando...' : 'Guardar reporte'}
+            </button>
+          </div>
+        </form>
       )}
 
       {/* Tarjetas KPI de Métricas */}
@@ -235,12 +692,13 @@ export default function ReportesPage() {
                     <th className="p-3">Pedidos</th>
                     <th className="p-3">Ventas Consolidadas</th>
                     <th className="p-3">Ocupación</th>
+                    <th className="p-3 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {ventasPorLocal.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-4 text-center text-gray-500">
+                      <td colSpan={6} className="p-4 text-center text-gray-500">
                         No hay reportes registrados para el período o sucursal seleccionada.
                       </td>
                     </tr>
@@ -269,6 +727,17 @@ export default function ReportesPage() {
                           <span className="badge badge-disponible">
                             {item.tasaOcupacion ?? 0}%
                           </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            disabled={guardando}
+                            onClick={() => handleEliminarReporte(item)}
+                            className="inline-flex items-center gap-1 rounded-md border border-red-300 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-45"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Eliminar
+                          </button>
                         </td>
                       </tr>
                     ))

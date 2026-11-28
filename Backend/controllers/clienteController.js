@@ -5,7 +5,8 @@ import {
   ROLES_CONSULTA_CLIENTES,
   ROLES_GESTION_CLIENTES,
 } from '../constants/roles.js';
-import { Cliente } from '../models/Cliente.js';
+import { Cliente, normalizarRut } from '../models/Cliente.js';
+import { Reserva } from '../models/Reserva.js';
 import { Restaurante } from '../models/Restaurante.js';
 
 function respuestaNoPermitida(res) {
@@ -198,6 +199,24 @@ export async function eliminar(req, res) {
     return res.status(404).json({
       success: false,
       message: 'No se encontró el cliente solicitado.',
+    });
+  }
+
+  if (req.query.permanente === 'true') {
+    const rutNormalizado = normalizarRut(cliente.rut);
+    const resultadoReservas = await Reserva.deleteMany({
+      $or: [
+        { clienteId: cliente.id },
+        { clienteRut: rutNormalizado },
+      ],
+    });
+    await Cliente.deleteOne({ _id: cliente._id });
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: cliente.id,
+        reservasEliminadas: resultadoReservas.deletedCount || 0,
+      },
     });
   }
 

@@ -8,6 +8,7 @@ import {
 import { Producto } from '../models/Producto.js';
 import { Restaurante } from '../models/Restaurante.js';
 import { ROLES } from '../constants/roles.js';
+import { recalcularReporteDePedido } from './reporteController.js';
 
 // Productos que el garzón todavía puede quitar de la comanda
 const ESTADOS_ITEM_QUITABLES = ['Borrador', 'Pendiente'];
@@ -431,9 +432,10 @@ export const cambiarEstadoPedido = async (req, res) => {
       throw new ErrorNegocio(409, 'El pedido cambió de estado recién. Actualiza la pantalla.');
     }
 
-    // Al cobrar, la mesa queda pendiente de limpieza; si se cancela, vuelve a estar disponible
+    // Al cobrar, la mesa queda pendiente de limpieza y se actualiza el reporte mensual
     if (estado === 'Pagado') {
       await liberarMesa(actualizado.mesaId, 'limpieza');
+      await recalcularReporteDePedido(actualizado);
     }
     if (estado === 'Cancelado') {
       await liberarMesa(actualizado.mesaId, 'disponible');

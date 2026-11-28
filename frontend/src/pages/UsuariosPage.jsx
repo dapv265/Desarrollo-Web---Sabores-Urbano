@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { UserPlus, ShieldCheck, Power } from "lucide-react";
+import { UserPlus, ShieldCheck, Power, Trash2 } from "lucide-react";
 
 import { useAuth } from "../auth/useAuth";
 import { ROLES } from "../auth/roles";
 import {
   cambiarEstadoUsuario,
+  eliminarUsuario,
   listarUsuarios,
   registrarUsuario,
 } from "../services/authService";
@@ -131,6 +132,29 @@ export default function UsuariosPage() {
       );
     } catch (err) {
       setError(err.message || "No se pudo cambiar el estado del usuario.");
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  const handleEliminarUsuario = async (usuario) => {
+    if (procesando) return;
+
+    const confirmado = window.confirm(
+      `¿Seguro que deseas eliminar permanentemente al usuario "${usuario.nombre}" (${usuario.email})? Esta acción no se puede deshacer.`,
+    );
+    if (!confirmado) return;
+
+    setError("");
+    setMensaje("");
+
+    try {
+      setProcesando(true);
+      await eliminarUsuario(usuario.id, token);
+      setUsuarios((prev) => prev.filter((u) => u.id !== usuario.id));
+      setMensaje(`Usuario ${usuario.nombre} eliminado correctamente.`);
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar el usuario.");
     } finally {
       setProcesando(false);
     }
@@ -342,19 +366,31 @@ export default function UsuariosPage() {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <button
-                          type="button"
-                          disabled={procesando || (esMismoUsuario && u.activo)}
-                          onClick={() => handleToggleEstado(u)}
-                          className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
-                            u.activo
-                              ? "border-red-300 text-red-700 hover:bg-red-50"
-                              : "border-green-300 text-green-700 hover:bg-green-50"
-                          }`}
-                        >
-                          <Power className="h-3.5 w-3.5" />
-                          {u.activo ? "Desactivar" : "Activar"}
-                        </button>
+                        <div className="inline-flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            disabled={procesando || (esMismoUsuario && u.activo)}
+                            onClick={() => handleToggleEstado(u)}
+                            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
+                              u.activo
+                                ? "border-amber-300 text-amber-700 hover:bg-amber-50"
+                                : "border-green-300 text-green-700 hover:bg-green-50"
+                            }`}
+                          >
+                            <Power className="h-3.5 w-3.5" />
+                            {u.activo ? "Desactivar" : "Activar"}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={procesando || esMismoUsuario}
+                            onClick={() => handleEliminarUsuario(u)}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-45"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Eliminar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

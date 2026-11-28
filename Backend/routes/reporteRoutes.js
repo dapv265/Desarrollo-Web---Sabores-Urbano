@@ -4,6 +4,7 @@ import {
   actualizarReporte,
   crearReporte,
   eliminarReporte,
+  generarReportesDesdePedidos,
   listarReportes,
   obtenerReportePorId,
   obtenerResumenReportes,
@@ -31,6 +32,7 @@ router.use(...soloAdministradores);
 
 router.get('/', validarFiltrosReporte, listarReportes);
 router.get('/resumen', validarFiltrosReporte, obtenerResumenReportes);
+router.post('/generar', generarReportesDesdePedidos);
 router.get('/:id', validarIdReporte, obtenerReportePorId);
 router.post('/', reporteCreateValidators, validateRequest, crearReporte);
 router.put(

@@ -10,6 +10,8 @@ export const pedidosIniciales = [
   {
     mesaId: 'T-01',
     mesaNombre: 'T-01',
+    restauranteCodigo: 'LOC-01',
+    clienteId: 1,
     cliente: 'Juan Pérez',
     estado: 'Pendiente',
     hora: '19:30',
@@ -38,6 +40,8 @@ export const pedidosIniciales = [
   {
     mesaId: 'M-05',
     mesaNombre: 'M-05',
+    restauranteCodigo: 'LOC-01',
+    clienteId: 2,
     cliente: 'María González',
     estado: 'Preparando',
     hora: '19:15',

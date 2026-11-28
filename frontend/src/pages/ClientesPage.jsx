@@ -7,6 +7,7 @@ import {
   actualizarCliente,
   crearCliente,
   eliminarCliente,
+  eliminarClientePermanente,
   obtenerClientes,
 } from "../services/clientesService";
 
@@ -29,6 +30,21 @@ function mensajeDeError(error) {
 
 function estadoVisible(cliente) {
   return cliente.activo === false ? "Inactivo" : cliente.estado || "Activo";
+}
+
+function formatearRut(valor) {
+  const limpio = String(valor || "")
+    .replace(/[^0-9kK]/g, "")
+    .toUpperCase()
+    .slice(0, 9);
+
+  if (limpio.length <= 1) {
+    return limpio;
+  }
+
+  const cuerpo = limpio.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const dv = limpio.slice(-1);
+  return `${cuerpo}-${dv}`;
 }
 
 const ClientesPage = () => {
@@ -201,6 +217,42 @@ const ClientesPage = () => {
     }
   };
 
+  const handleEliminarPermanente = async (cliente) => {
+    if (
+      !window.confirm(
+        `¿Seguro que deseas eliminar permanentemente a ${cliente.nombre} (${cliente.rut})? También se eliminarán sus reservas asociadas. Esta acción no se puede deshacer.`,
+      )
+    ) {
+      return;
+    }
+
+    setGuardando(true);
+    setError("");
+    setMensaje("");
+
+    try {
+      const resultado = await eliminarClientePermanente(
+        session.token,
+        cliente.id,
+      );
+      setClientes((actuales) =>
+        actuales.filter((item) => item.id !== cliente.id),
+      );
+      const eliminadas = resultado?.reservasEliminadas || 0;
+      setMensaje(
+        eliminadas > 0
+          ? `Cliente ${cliente.nombre} eliminado junto con ${eliminadas} reserva(s) asociada(s).`
+          : `Cliente ${cliente.nombre} eliminado correctamente.`,
+      );
+    } catch (requestError) {
+      if (!manejarNoAutorizado(requestError)) {
+        setError(mensajeDeError(requestError));
+      }
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   const accionesCliente = (cliente) =>
     puedeGestionar ? (
       <div className="flex flex-wrap gap-2">
@@ -215,13 +267,21 @@ const ClientesPage = () => {
         {cliente.activo !== false && (
           <button
             type="button"
-            className="rounded-md border border-red-200 px-3 py-1 text-sm text-red-700 hover:bg-red-50"
+            className="rounded-md border border-amber-300 px-3 py-1 text-sm text-amber-700 hover:bg-amber-50"
             onClick={() => handleEliminarCliente(cliente)}
             disabled={guardando}
           >
             Desactivar
           </button>
         )}
+        <button
+          type="button"
+          className="rounded-md border border-red-300 px-3 py-1 text-sm text-red-700 hover:bg-red-50"
+          onClick={() => handleEliminarPermanente(cliente)}
+          disabled={guardando}
+        >
+          Eliminar
+        </button>
       </div>
     ) : null;
 
@@ -330,11 +390,15 @@ const ClientesPage = () => {
                   id="cliente-rut"
                   type="text"
                   required
+                  maxLength={12}
                   placeholder="Ej: 12.345.678-9"
                   className="rounded-md border p-2"
                   value={nuevoCliente.rut}
                   onChange={(event) =>
-                    setNuevoCliente({ ...nuevoCliente, rut: event.target.value })
+                    setNuevoCliente({
+                      ...nuevoCliente,
+                      rut: formatearRut(event.target.value),
+                    })
                   }
                 />
               </div>

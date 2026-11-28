@@ -26,3 +26,10 @@ export function eliminarCliente(token, id) {
     token,
   });
 }
+
+export function eliminarClientePermanente(token, id) {
+  return apiRequest(`/clientes/${encodeURIComponent(id)}?permanente=true`, {
+    method: "DELETE",
+    token,
+  });
+}

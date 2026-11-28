@@ -46,6 +46,21 @@ const TEXTO_ESTADO_MESA = {
   limpieza: "en limpieza",
 };
 
+function formatearRut(valor) {
+  const limpio = String(valor || "")
+    .replace(/[^0-9kK]/g, "")
+    .toUpperCase()
+    .slice(0, 9);
+
+  if (limpio.length <= 1) {
+    return limpio;
+  }
+
+  const cuerpo = limpio.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const dv = limpio.slice(-1);
+  return `${cuerpo}-${dv}`;
+}
+
 // Se monta al abrirse: los valores iniciales se leen solo una vez.
 // `reservaEditar` = reserva a editar (modo edición) o null (nueva reserva).
 // `valoresIniciales` = { fecha, hora, mesa } para una reserva nueva.
@@ -386,12 +401,13 @@ export default function ModalReserva({
             <input
               id="rutCliente"
               type="text"
+              maxLength={12}
               placeholder="12.345.678-9"
               pattern="\d{1,2}\.\d{3}\.\d{3}-[\dkK]"
               title="Formato 12.345.678-9"
               value={clienteRut}
               onChange={(evento) =>
-                setClienteRut(evento.target.value)
+                setClienteRut(formatearRut(evento.target.value))
               }
               required
             />
